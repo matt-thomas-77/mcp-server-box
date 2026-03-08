@@ -2,20 +2,14 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Upgrade pip and install uv
-# uv is the recommended tool for managing dependencies in this project
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir uv
 
-# Copy only dependency files first to leverage Docker cache
 COPY pyproject.toml uv.lock README.md ./
 
-# Copy source code
 COPY src/ ./src/
 
-# Install dependencies using uv
-# This creates a virtual environment in .venv
-# We run as root first to install system dependencies if any, then switch user
+# install dependencies and create a virtual environment using uv
 RUN uv sync
 
 # Create a non-root user for security and change ownership
@@ -31,7 +25,6 @@ EXPOSE 8005
 ENV HOST=0.0.0.0
 ENV PORT=8005
 ENV BOX_SUBJECT_TYPE=enterprise
-# Add the virtual environment to the PATH
 ENV PATH="/app/.venv/bin:$PATH"
 
 # --transport sse: Uses Server-Sent Events (requested streaming http mode)
