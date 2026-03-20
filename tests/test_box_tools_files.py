@@ -415,7 +415,7 @@ async def test_box_file_presentation_extract_tool_non_pptx():
         result = await box_file_presentation_extract_tool(ctx, file_id)
 
         assert "error" in result
-        assert ".pptx" in result["error"]
+        assert "supported presentation format" in result["error"]
 
 
 @pytest.mark.asyncio
@@ -487,6 +487,33 @@ async def test_box_file_presentation_extract_tool_parse_fail_with_pptx_hint():
 
         assert "error" in result
         assert "Unable to parse file as .pptx" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_pdf_success():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+        patch("tools.box_tools_file._extract_pdf_markdown_from_bytes") as mock_extract_pdf,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {"name": "deck.pdf"}
+        mock_download.return_value = (None, b"pdf-bytes", "application/pdf")
+        mock_extract_pdf.return_value = {
+            "representation": "text/markdown",
+            "page_count": 2,
+            "content": "## Page 1\nHello",
+        }
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert result["representation"] == "text/markdown"
+        assert result["page_count"] == 2
+        assert result["file_name"] == "deck.pdf"
+        mock_extract_pdf.assert_called_once_with(b"pdf-bytes")
 
 
 @pytest.mark.asyncio

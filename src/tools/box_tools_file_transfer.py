@@ -13,7 +13,7 @@ from tools.box_tools_generic import get_box_client
 async def box_file_download_tool(
     ctx: Context,
     file_id: str,
-    save_file: bool = False,
+    save_file: bool | None = False,
     save_path: Optional[str] = None,
 ) -> dict[str, Any]:
     """
@@ -21,7 +21,7 @@ async def box_file_download_tool(
 
     Args:
         file_id (str): The ID of the file to download.
-        save_file (bool, optional): Whether to save the file locally. Defaults to False.
+        save_file (bool | None, optional): Whether to save the file locally. If null, treated as False.
         save_path (str, optional): Path where to save the file. If not provided but save_file is True,
                                   uses a temporary directory. Defaults to None.
 
@@ -31,6 +31,8 @@ async def box_file_download_tool(
                        For unsupported files: error message.
                        If save_file is True, includes the path where the file was saved.
     """
+    save_file = bool(save_file)
+
     box_client = get_box_client(ctx)
     path_saved, file_content, mime_type = box_file_download(
         box_client, file_id, save_file, save_path

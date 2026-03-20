@@ -30,6 +30,7 @@ from tools.box_tools_generic import get_box_client
 
 PPTX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 PPT_MIME_TYPE = "application/vnd.ms-powerpoint"
+PDF_MIME_TYPE = "application/pdf"
 
 
 def _extract_file_name(file_info: Any) -> str:
@@ -116,6 +117,39 @@ def _extract_pptx_markdown_from_bytes(file_content: bytes) -> dict[str, Any]:
     return {
         "representation": "text/markdown",
         "slide_count": len(presentation.slides),
+        "content": "\n".join(markdown_parts).strip(),
+    }
+
+
+def _extract_pdf_markdown_from_bytes(file_content: bytes) -> dict[str, Any]:
+    """Extract markdown and metadata from a PDF payload."""
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        return {
+            "error": "pypdf is not installed. Install 'pypdf' to enable PDF extraction.",
+        }
+
+    try:
+        reader = PdfReader(BytesIO(file_content))
+    except Exception:
+        return {
+            "error": "Unable to parse file as PDF.",
+        }
+
+    markdown_parts: list[str] = []
+    for page_number, page in enumerate(reader.pages, start=1):
+        markdown_parts.append(f"## Page {page_number}")
+        page_text = (page.extract_text() or "").strip()
+        if page_text:
+            markdown_parts.append(page_text)
+        else:
+            markdown_parts.append("(No extractable page text found)")
+        markdown_parts.append("")
+
+    return {
+        "representation": "text/markdown",
+        "page_count": len(reader.pages),
         "content": "\n".join(markdown_parts).strip(),
     }
 
@@ -459,7 +493,7 @@ async def box_file_presentation_extract_tool(
     file_id: str,
 ) -> dict[str, Any]:
     """
-    Extract LLM-ready markdown text from a PowerPoint file in Box.
+    Extract LLM-ready markdown text from a PowerPoint or PDF file in Box.
 
     This tool only reads file bytes and does not modify the original Box file.
 
@@ -467,7 +501,7 @@ async def box_file_presentation_extract_tool(
         file_id (str): The ID of the file to process.
 
     Returns:
-        dict[str, Any]: Markdown content with slide-number context, or an error.
+        dict[str, Any]: Markdown content with slide/page context, or an error.
     """
     box_client = get_box_client(ctx)
 
@@ -484,12 +518,16 @@ async def box_file_presentation_extract_tool(
             "file_name": file_name,
         }
 
-    # If metadata explicitly says this is not a PowerPoint file, fail fast.
-    has_non_ppt_mime = bool(mime_type) and mime_type not in {PPTX_MIME_TYPE, PPT_MIME_TYPE}
-    has_ppt_filename = file_name.lower().endswith(".pptx") or file_name.lower().endswith(".ppt")
-    if has_non_ppt_mime and not has_ppt_filename:
+    # If metadata explicitly says this is not a supported type, fail fast.
+    has_supported_mime = mime_type in {PPTX_MIME_TYPE, PPT_MIME_TYPE, PDF_MIME_TYPE}
+    has_supported_filename = (
+        file_name.lower().endswith(".pptx")
+        or file_name.lower().endswith(".ppt")
+        or file_name.lower().endswith(".pdf")
+    )
+    if bool(mime_type) and not has_supported_mime and not has_supported_filename:
         return {
-            "error": "File is not a .pptx PowerPoint presentation.",
+            "error": "File is not a supported presentation format (.pptx or .pdf).",
             "mime_type": mime_type,
             "file_name": file_name,
             "file_id": file_id,
@@ -502,7 +540,11 @@ async def box_file_presentation_extract_tool(
             "file_name": file_name,
         }
 
-    extracted = _extract_pptx_markdown_from_bytes(file_content)
+    is_pdf_hint = mime_type == PDF_MIME_TYPE or file_name.lower().endswith(".pdf")
+    if is_pdf_hint:
+        extracted = _extract_pdf_markdown_from_bytes(file_content)
+    else:
+        extracted = _extract_pptx_markdown_from_bytes(file_content)
 
     # If parsing succeeded, return content regardless of metadata quality.
     if "error" not in extracted:
@@ -511,7 +553,7 @@ async def box_file_presentation_extract_tool(
         extracted["mime_type"] = mime_type
         return extracted
 
-    # If metadata claims .pptx but parsing failed, return a more specific error.
+    # If metadata claims .pptx/.pdf but parsing failed, return a more specific error.
     is_pptx_hint = mime_type == PPTX_MIME_TYPE or file_name.lower().endswith(".pptx")
     if is_pptx_hint:
         return {
@@ -521,15 +563,26 @@ async def box_file_presentation_extract_tool(
             "file_id": file_id,
         }
 
+    if is_pdf_hint:
+        return {
+            "error": "Unable to parse file as PDF. The file may be corrupted or not a valid PDF.",
+            "mime_type": mime_type,
+            "file_name": file_name,
+            "file_id": file_id,
+        }
+
     # Unknown metadata and failed parse: treat as non-PowerPoint.
-    if extracted.get("error") == "python-pptx is not installed. Install 'python-pptx' to enable PowerPoint extraction.":
+    if extracted.get("error") in {
+        "python-pptx is not installed. Install 'python-pptx' to enable PowerPoint extraction.",
+        "pypdf is not installed. Install 'pypdf' to enable PDF extraction.",
+    }:
         extracted["file_id"] = file_id
         extracted["file_name"] = file_name
         extracted["mime_type"] = mime_type
         return extracted
 
     return {
-        "error": "File is not a .pptx PowerPoint presentation.",
+        "error": "File is not a supported presentation format (.pptx or .pdf).",
         "mime_type": mime_type,
         "file_name": file_name,
         "file_id": file_id,

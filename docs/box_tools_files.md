@@ -179,19 +179,19 @@ Download the actual thumbnail image of a file.
 - **Use Case:** Retrieve thumbnail images for embedded display
 
 ### 19. `box_file_presentation_extract_tool`
-Extract LLM-ready markdown text from a PowerPoint presentation (.pptx) in Box.
+Extract LLM-ready markdown text from a PowerPoint presentation (.pptx) or PDF (.pdf) in Box.
 - **Arguments:**
   - `file_id` (str): The ID of the file
 - **Returns:** dict with:
   - `representation`: `text/markdown`
-  - `content`: Markdown block containing extracted slide content
-  - `slide_count`: Number of slides extracted
+  - `content`: Markdown block containing extracted slide/page content
+  - `slide_count` or `page_count`: Number of slides/pages extracted
   - `file_id`, `file_name`, `mime_type`: Metadata
 - **Notes:**
   - Read-only operation: the source file in Box is not modified.
-  - Includes slide-number context (`## Slide N`) for each slide.
+  - Includes numbering context (`## Slide N` for PowerPoint, `## Page N` for PDF).
   - Legacy `.ppt` files are not supported by this extractor.
-- **Use Case:** Convert presentation content into an LLM-friendly format while preserving slide association
+- **Use Case:** Convert presentation/document content into an LLM-friendly format while preserving slide/page association
 
 ---
 
