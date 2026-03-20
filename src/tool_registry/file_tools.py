@@ -6,6 +6,7 @@ from tools.box_tools_file import (
     box_file_info_tool,
     box_file_lock_tool,
     box_file_move_tool,
+    box_file_presentation_extract_tool,
     box_file_rename_tool,
     box_file_retention_date_clear_tool,
     box_file_retention_date_set_tool,
@@ -41,3 +42,4 @@ def register_file_tools(mcp: FastMCP):
     mcp.tool()(box_file_tag_remove_tool)
     mcp.tool()(box_file_thumbnail_url_tool)
     mcp.tool()(box_file_thumbnail_download_tool)
+    mcp.tool()(box_file_presentation_extract_tool)

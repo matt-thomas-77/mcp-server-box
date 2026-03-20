@@ -92,7 +92,7 @@ def main() -> int:
     )
 
     # Register all tools
-    register_tools(mcp)
+    register_tools(mcp, disabled_groups=app_config.server.tool_groups_disable)
 
     # Register server info tool
     create_server_info_tool(mcp, config=app_config.server)

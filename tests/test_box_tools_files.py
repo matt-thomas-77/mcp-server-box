@@ -10,6 +10,7 @@ from tools.box_tools_file import (
     box_file_info_tool,
     box_file_lock_tool,
     box_file_move_tool,
+    box_file_presentation_extract_tool,
     box_file_rename_tool,
     box_file_retention_date_clear_tool,
     box_file_retention_date_set_tool,
@@ -325,6 +326,167 @@ async def test_box_file_tag_remove_tool():
         result = await box_file_tag_remove_tool(ctx, file_id, tag)
         assert isinstance(result, dict)
         mock_remove.assert_called_once_with("client", file_id, tag)
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_success():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+        patch(
+            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+        ) as mock_extract,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {"name": "deck.pptx"}
+        mock_download.return_value = (
+            None,
+            b"pptx-bytes",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        )
+        mock_extract.return_value = {
+            "representation": "text/markdown",
+            "slide_count": 2,
+            "content": "## Slide 1\n- Intro",
+        }
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert result["representation"] == "text/markdown"
+        assert result["slide_count"] == 2
+        assert result["file_id"] == file_id
+        assert result["file_name"] == "deck.pptx"
+        mock_extract.assert_called_once_with(b"pptx-bytes")
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_success_with_nested_file_name():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+        patch(
+            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+        ) as mock_extract,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {
+            "file": {
+                "id": file_id,
+                "name": "Air Program Deck_Final.pptx",
+            }
+        }
+        mock_download.return_value = (
+            None,
+            b"pptx-bytes",
+            "application/octet-stream",
+        )
+        mock_extract.return_value = {
+            "representation": "text/markdown",
+            "slide_count": 1,
+            "content": "## Slide 1\n- Intro",
+        }
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert result["representation"] == "text/markdown"
+        assert result["file_name"] == "Air Program Deck_Final.pptx"
+        mock_extract.assert_called_once_with(b"pptx-bytes")
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_non_pptx():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {"name": "notes.txt"}
+        mock_download.return_value = (None, b"hello", "text/plain")
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert "error" in result
+        assert ".pptx" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_legacy_ppt_not_supported():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {"name": "legacy.ppt"}
+        mock_download.return_value = (None, b"ppt-bytes", "application/vnd.ms-powerpoint")
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert "error" in result
+        assert "Legacy .ppt files" in result["error"]
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_succeeds_when_metadata_missing():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+        patch(
+            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+        ) as mock_extract,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {"id": file_id}
+        mock_download.return_value = (None, b"pptx-bytes", "")
+        mock_extract.return_value = {
+            "representation": "text/markdown",
+            "slide_count": 1,
+            "content": "## Slide 1\n- Intro",
+        }
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert result["representation"] == "text/markdown"
+        assert result["file_id"] == file_id
+
+
+@pytest.mark.asyncio
+async def test_box_file_presentation_extract_tool_parse_fail_with_pptx_hint():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file.get_box_client") as mock_get_client,
+        patch("tools.box_tools_file.box_file_info") as mock_info,
+        patch("tools.box_tools_file.box_file_download") as mock_download,
+        patch(
+            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+        ) as mock_extract,
+    ):
+        mock_get_client.return_value = "client"
+        mock_info.return_value = {"name": "deck.pptx"}
+        mock_download.return_value = (None, b"not-a-pptx", "")
+        mock_extract.return_value = {
+            "error": "Unable to parse file as .pptx PowerPoint presentation.",
+        }
+
+        result = await box_file_presentation_extract_tool(ctx, file_id)
+
+        assert "error" in result
+        assert "Unable to parse file as .pptx" in result["error"]
 
 
 @pytest.mark.asyncio

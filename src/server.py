@@ -1,5 +1,6 @@
 """MCP server configuration and initialization."""
 
+import logging
 from pathlib import Path
 
 import tomli
@@ -29,6 +30,27 @@ from tool_registry.shared_link_tools import register_shared_link_tools
 from tool_registry.tasks_tools import register_tasks_tools
 from tool_registry.user_tools import register_user_tools
 from tool_registry.web_link_tools import register_web_link_tools
+
+logger = logging.getLogger(__name__)
+
+
+TOOL_GROUP_REGISTRARS = {
+    "generic": register_generic_tools,
+    "search": register_search_tools,
+    "ai": register_ai_tools,
+    "doc_gen": register_doc_gen_tools,
+    "file_transfer": register_file_transfer_tools,
+    "file": register_file_tools,
+    "file_representation": register_file_representation_tools,
+    "folder": register_folder_tools,
+    "metadata": register_metadata_tools,
+    "user": register_user_tools,
+    "group": register_group_tools,
+    "collaboration": register_collaboration_tools,
+    "web_link": register_web_link_tools,
+    "shared_link": register_shared_link_tools,
+    "tasks": register_tasks_tools,
+}
 
 
 def get_version() -> str:
@@ -90,27 +112,29 @@ def create_mcp_server(
     return mcp
 
 
-def register_tools(mcp: FastMCP) -> None:
-    """Register all tools with the MCP server."""
+def _get_enabled_registrars(disabled_groups: set[str]):
+    """Return registrars after filtering out disabled tool groups."""
+    invalid_groups = sorted(disabled_groups - set(TOOL_GROUP_REGISTRARS.keys()))
+    if invalid_groups:
+        logger.warning(
+            "Ignoring unknown tool group(s) in TOOL_GROUPS_DISABLE: %s",
+            ", ".join(invalid_groups),
+        )
+
+    disabled_groups = disabled_groups & set(TOOL_GROUP_REGISTRARS.keys())
+    return [
+        registrar
+        for group_name, registrar in TOOL_GROUP_REGISTRARS.items()
+        if group_name not in disabled_groups
+    ]
+
+
+def register_tools(mcp: FastMCP, disabled_groups: set[str] | None = None) -> None:
+    """Register all enabled tools with the MCP server."""
+    disabled_groups = disabled_groups or set()
     register_all_tools(
         mcp,
-        [
-            register_generic_tools,
-            register_search_tools,
-            register_ai_tools,
-            register_doc_gen_tools,
-            register_file_transfer_tools,
-            register_file_tools,
-            register_file_representation_tools,
-            register_folder_tools,
-            register_metadata_tools,
-            register_user_tools,
-            register_group_tools,
-            register_collaboration_tools,
-            register_web_link_tools,
-            register_shared_link_tools,
-            register_tasks_tools,
-        ],
+        _get_enabled_registrars(disabled_groups),
     )
 
 
@@ -129,6 +153,7 @@ def create_server_info_tool(
             "transport": config.transport,
             "mcp auth": config.mcp_auth_type,
             "box auth": config.box_auth,
+            "tool_groups_disable": sorted(config.tool_groups_disable),
         }
 
         if config.transport != TransportType.STDIO.value:

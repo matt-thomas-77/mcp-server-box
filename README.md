@@ -56,6 +56,22 @@ OAUTH_PROTECTED_RESOURCES_CONFIG_FILE = .oauth-protected-resource.json
 > **Note**:
 > - The `BOX_MCP_SERVER_AUTH_TOKEN` is used to authenticate the MCP client to the MCP server when using `--mcp-auth-type=token` (independent of Box authentication)
 
+### Optional tool group filtering (server-side)
+If your MCP client does not support tool-level toggles, you can disable tool groups at the server using `TOOL_GROUPS_DISABLE`.
+
+Example:
+```
+TOOL_GROUPS_DISABLE = ai,doc_gen,shared_link
+```
+
+Supported group names:
+`generic`, `search`, `ai`, `doc_gen`, `file_transfer`, `file`, `file_representation`, `folder`, `metadata`, `user`, `group`, `collaboration`, `web_link`, `shared_link`, `tasks`
+
+Notes:
+- Values are case-insensitive and comma-separated.
+- Unknown group names are ignored with a warning.
+- If unset or empty, all tool groups are enabled.
+
 
 
 ### Run the MCP server in STDIO mode:

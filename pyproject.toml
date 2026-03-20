@@ -12,6 +12,7 @@ dependencies = [
     "colorlog>=6.10.1",
     "fastapi>=0.121.0",
     "mcp[cli]>=1.19.0",
+    "python-pptx>=1.0.2",
     "python-dotenv>=1.2.1",
     "tomli>=2.3.0",
 ]
