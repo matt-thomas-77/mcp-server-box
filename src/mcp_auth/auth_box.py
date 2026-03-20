@@ -7,15 +7,28 @@ from starlette.responses import JSONResponse
 logger = logging.getLogger(__name__)
 
 
+def _get_header_value(scope, header_name: str) -> str:
+    """Return a case-insensitive HTTP header value from an ASGI scope."""
+    header_name = header_name.lower()
+
+    for key, value in scope.get("headers", []):
+        key_str = key.decode("latin-1") if isinstance(key, bytes) else str(key)
+        if key_str.lower() != header_name:
+            continue
+
+        return (value.decode("latin-1") if isinstance(value, bytes) else str(value)).strip()
+
+    return ""
+
+
 def box_auth_validate_token(scope) -> Optional[JSONResponse]:
     """Validate if the auth token is properly configured."""
 
     path = scope["path"]
     logger.debug(f"Token validation processing: {scope['method']} {path}")
 
-    # Extract authorization header
-    headers = dict(scope.get("headers", []))
-    auth_header = headers.get(b"authorization", b"").decode("utf-8")
+    # Extract authorization header from potentially mixed key/value types
+    auth_header = _get_header_value(scope, "authorization")
 
     # Validate authentication
     response = None
@@ -41,7 +54,7 @@ def box_auth_validate_token(scope) -> Optional[JSONResponse]:
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
     else:
-        token = auth_header.replace("Bearer ", "")
+        token = auth_header[len("Bearer ") :].strip()
 
         logger.debug(f"Token is present for {scope['method']} {path}")
         logger.debug("A box client will be created using the provided token.")

@@ -25,9 +25,9 @@ EXPOSE 8005
 ENV HOST=0.0.0.0
 ENV PORT=8005
 ENV BOX_SUBJECT_TYPE=enterprise
+# ENV OAUTH_PROTECTED_RESOURCES_CONFIG_FILE=.oauth-protected-resource.json
+ENV LOG_LEVEL=debug
 ENV PATH="/app/.venv/bin:$PATH"
 
-# --transport sse: Uses Server-Sent Events (requested streaming http mode)
-# --mcp-auth-type token: Uses token for MCP authentication (default/secure for non-delegated auth)
-# --box-auth-type ccg: Uses Box Client Credentials Grant (server-to-server auth)
-CMD ["uv", "run", "src/mcp_server_box.py", "--transport", "sse", "--mcp-auth-type", "token", "--box-auth-type", "ccg", "--host", "0.0.0.0", "--port", "8005"]
+# --transport http: Uses Streaming HTTP transport
+CMD ["uv", "run", "src/mcp_server_box.py", "--transport", "http", "--mcp-auth-type", "token", "--box-auth-type", "ccg", "--host", "0.0.0.0", "--port", "8005"]
