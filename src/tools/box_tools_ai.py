@@ -16,6 +16,7 @@ from box_ai_agents_toolkit import (
 from mcp.server.fastmcp import Context
 
 from tools.box_tools_generic import get_box_client
+from tools.prompts import PDF_POWERPOINT_PARSER_PROMPT
 
 
 async def box_ai_ask_file_single_tool(
@@ -27,6 +28,28 @@ async def box_ai_ask_file_single_tool(
         ctx (Context): The context object containing the request and lifespan context.
         file_id (str): The ID of the file to ask about, example: "1234567890".
         prompt (str): The question to ask.
+        ai_agent_id (Optional[str]): The ID of the AI agent to use for the question. If None, the default AI agent will be used.
+    Returns:
+        dict: The AI response containing the answer to the question.
+    """
+
+    box_client = get_box_client(ctx)
+    response = box_ai_ask_file_single(
+        box_client, file_id, prompt=prompt, ai_agent_id=ai_agent_id
+    )
+    return response
+
+
+async def box_ai_pdf_powerpoint_parser_tool(
+    ctx: Context, file_id: str, prompt: str = PDF_POWERPOINT_PARSER_PROMPT, 
+    ai_agent_id: str = "66136138"
+) -> dict:
+    """
+    Use AI to get full content in text format from a PDF or PowerPoint file, including text in images.
+    Args:
+        ctx (Context): The context object containing the request and lifespan context.
+        file_id (str): The ID of the file to ask about, example: "1234567890".
+        prompt (str): The prompt to use for parsing the file. Defaults to PDF_POWERPOINT_PARSER_PROMPT.
         ai_agent_id (Optional[str]): The ID of the AI agent to use for the question. If None, the default AI agent will be used.
     Returns:
         dict: The AI response containing the answer to the question.

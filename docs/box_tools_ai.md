@@ -122,25 +122,41 @@ Enhanced version of template-based extraction with improved accuracy for complex
   - Better handling of complex document layouts
   - More robust extraction for handwritten or low-quality scans
 
+#### 9. `box_ai_pdf_powerpoint_parser_tool`
+Use AI to extract full content in text format from a PDF or PowerPoint file, including text within images. Returns structured, slide-by-slide (PowerPoint) or page-by-page (PDF) output preserving ordering, grouping, titles, tables, charts, and visuals.
+
+**Best for:** Converting PDF or PowerPoint files into structured text while preserving layout and visual content.
+
+- **Arguments:**
+  - `file_id` (str): ID of the Box file
+  - `prompt` (str, optional): Custom parsing prompt (defaults to built-in `PDF_POWERPOINT_PARSER_PROMPT`)
+  - `ai_agent_id` (str, optional): AI agent to use (defaults to `"66136138"`)
+- **Returns:** dict with structured text extraction of the file content
+- **Use Cases:**
+  - Extract all text and visual descriptions from a presentation deck
+  - Convert a PDF report into structured, searchable text
+  - Parse slide content including charts, diagrams, and tables
+- **Note:** Each slide/page is treated independently — content is not merged or carried over between slides/pages.
+
 ---
 
 ### AI Agent Management Tools
 
-#### 9. `box_ai_agent_info_by_id_tool`
+#### 10. `box_ai_agent_info_by_id_tool`
 Get detailed information about a specific AI agent by its ID.
 - **Arguments:**
   - `ai_agent_id` (str): ID of the AI agent
 - **Returns:** dict with agent information
 - **Use Case:** Retrieve configuration and details about a specific AI agent
 
-#### 10. `box_ai_agents_list_tool`
+#### 11. `box_ai_agents_list_tool`
 List all available AI agents in your Box environment.
 - **Arguments:**
   - `limit` (int, optional): Maximum number of agents to return (default: 1000)
 - **Returns:** dict with list of available AI agents
 - **Use Case:** Discover available agents before specifying agent_id in other tools
 
-#### 11. `box_ai_agents_search_by_name_tool`
+#### 12. `box_ai_agents_search_by_name_tool`
 Search for AI agents by name in your Box environment.
 - **Arguments:**
   - `name` (str): Name filter to search for agents
@@ -159,6 +175,7 @@ Search for AI agents by name in your Box environment.
 | `structured_template` | Metadata template | Structured JSON | Template-based | Single record |
 | `enhanced_fields` | Custom fields | Structured JSON | Complex documents | Single record |
 | `enhanced_template` | Metadata template | Structured JSON | Complex documents | Single record |
+| `pdf_powerpoint_parser` | File ID | Structured text | PDF/PPT full extraction | Single file |
 
 ## Usage Notes
 
