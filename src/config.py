@@ -46,6 +46,22 @@ class ServerConfig:
     box_auth: BoxAuthType = BoxAuthType.OAUTH
     mcp_auth_type: McpAuthType = McpAuthType.TOKEN
     server_name: str = "Box Community MCP"
+    tool_groups_disable: set[str] = field(default_factory=set)
+    tool_groups_enable: set[str] = field(default_factory=set)
+    tools_disable: set[str] = field(default_factory=set)
+    tools_enable: set[str] = field(default_factory=set)
+
+
+def _parse_csv_env_set(env_value: Optional[str]) -> set[str]:
+    """Parse a comma-separated env var into a normalized set."""
+    if not env_value:
+        return set()
+
+    return {
+        entry.strip().lower()
+        for entry in env_value.split(",")
+        if entry.strip()
+    }
 
 
 @dataclass
@@ -108,7 +124,12 @@ class AppConfig:
         dotenv.load_dotenv()
 
         # Server configuration (defaults used, can be overridden at runtime)
-        server_config = ServerConfig()
+        server_config = ServerConfig(
+            tool_groups_disable=_parse_csv_env_set(os.getenv("TOOL_GROUPS_DISABLE")),
+            tool_groups_enable=_parse_csv_env_set(os.getenv("TOOL_GROUPS_ENABLE")),
+            tools_disable=_parse_csv_env_set(os.getenv("TOOLS_DISABLE")),
+            tools_enable=_parse_csv_env_set(os.getenv("TOOLS_ENABLE")),
+        )
 
         # Box API configuration
         box_api_config = BoxApiConfig(

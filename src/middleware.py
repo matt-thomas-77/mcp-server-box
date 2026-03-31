@@ -13,6 +13,48 @@ from oauth_endpoints import add_oauth_endpoints
 logger = logging.getLogger(__name__)
 
 
+MCP_ACCEPT_HEADER_VALUE = b"application/json, text/event-stream"
+
+
+def _ensure_mcp_accept_header(scope):
+    """Ensure the request has an MCP-compatible Accept header."""
+    headers = list(scope.get("headers", []))
+    accept_index = None
+    accept_value = ""
+
+    for idx, (key, value) in enumerate(headers):
+        key_str = key.decode("latin-1") if isinstance(key, bytes) else str(key)
+        if key_str.lower() != "accept":
+            continue
+
+        accept_index = idx
+        accept_value = (
+            value.decode("latin-1") if isinstance(value, bytes) else str(value)
+        ).lower()
+        break
+
+    # Add a default Accept header when absent.
+    if accept_index is None:
+        logger.debug("Injecting Accept: application/json, text/event-stream header")
+        headers.append((b"accept", MCP_ACCEPT_HEADER_VALUE))
+        scope = dict(scope)
+        scope["headers"] = headers
+        return scope
+
+    has_json = "application/json" in accept_value
+    has_sse = "text/event-stream" in accept_value
+
+    if has_json and has_sse:
+        return scope
+
+    # Normalize wildcard/non-MCP Accept values to match the MCP transport contract.
+    logger.debug("Normalizing Accept header to application/json, text/event-stream")
+    headers[accept_index] = (b"accept", MCP_ACCEPT_HEADER_VALUE)
+    scope = dict(scope)
+    scope["headers"] = headers
+    return scope
+
+
 class AuthMiddleware:
     """Pure ASGI middleware to validate Bearer token authentication.
     Expects the token to be set in the BOX_MCP_SERVER_AUTH_TOKEN environment variable.
@@ -46,6 +88,8 @@ class AuthMiddleware:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
+
+        scope = _ensure_mcp_accept_header(scope)
 
         path = scope["path"]
         logger.debug(f"AuthMiddleware processing: {scope['method']} {path}")
@@ -87,6 +131,7 @@ class AuthMiddleware:
         logger.debug(
             f"[Middleware]Authentication successful for {scope['method']} {path}"
         )
+
         await self.app(scope, receive, send)
 
 
@@ -130,7 +175,7 @@ def add_auth_middleware(
                 allow_origins=["*"],
                 allow_credentials=False,
                 allow_methods=["GET", "POST", "OPTIONS"],
-                allow_headers=["Mcp-Protocol-Version", "Content-Type", "Authorization"],
+                allow_headers=["Mcp-Protocol-Version", "Content-Type", "Authorization", "Accept"],
                 expose_headers=["WWW-Authenticate"],
                 max_age=86400,
             )
@@ -165,7 +210,7 @@ def add_auth_middleware(
                 allow_origins=["*"],
                 allow_credentials=False,
                 allow_methods=["GET", "POST", "OPTIONS"],
-                allow_headers=["Mcp-Protocol-Version", "Content-Type", "Authorization"],
+                allow_headers=["Mcp-Protocol-Version", "Content-Type", "Authorization", "Accept"],
                 expose_headers=["WWW-Authenticate"],
                 max_age=86400,
             )

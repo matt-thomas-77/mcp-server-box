@@ -122,6 +122,24 @@ async def test_box_file_download_tool_no_content():
 
 
 @pytest.mark.asyncio
+async def test_box_file_download_tool_accepts_null_save_file():
+    ctx = MagicMock(spec=Context)
+    file_id = "12345"
+    with (
+        patch("tools.box_tools_file_transfer.box_file_download") as mock_download,
+        patch("tools.box_tools_file_transfer.get_box_client") as mock_get_client,
+    ):
+        mock_get_client.return_value = "client"
+        mock_download.return_value = (None, b"Hello", "text/plain")
+
+        result = await box_file_download_tool(ctx, file_id, save_file=None)
+
+        assert isinstance(result, dict)
+        assert result["content"] == "Hello"
+        mock_download.assert_called_once_with("client", file_id, False, None)
+
+
+@pytest.mark.asyncio
 async def test_box_file_download_tool_text_with_invalid_encoding():
     ctx = MagicMock(spec=Context)
     file_id = "12345"

@@ -12,6 +12,7 @@ from tools.box_tools_ai import (
     box_ai_extract_structured_enhanced_using_template_tool,
     box_ai_extract_structured_using_fields_tool,
     box_ai_extract_structured_using_template_tool,
+    box_ai_pdf_powerpoint_parser_tool
 )
 
 
@@ -27,3 +28,4 @@ def register_ai_tools(mcp: FastMCP):
     mcp.tool()(box_ai_agent_info_by_id_tool)
     mcp.tool()(box_ai_agents_list_tool)
     mcp.tool()(box_ai_agents_search_by_name_tool)
+    mcp.tool()(box_ai_pdf_powerpoint_parser_tool)

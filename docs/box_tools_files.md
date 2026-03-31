@@ -178,13 +178,28 @@ Download the actual thumbnail image of a file.
 - **Returns:** dict with thumbnail image content in base64 and mime type
 - **Use Case:** Retrieve thumbnail images for embedded display
 
+### 19. `box_file_presentation_extract_tool`
+Extract LLM-ready markdown text from a PowerPoint presentation (.pptx) or PDF (.pdf) in Box.
+- **Arguments:**
+  - `file_id` (str): The ID of the file
+- **Returns:** dict with:
+  - `representation`: `text/markdown`
+  - `content`: Markdown block containing extracted slide/page content
+  - `slide_count` or `page_count`: Number of slides/pages extracted
+  - `file_id`, `file_name`, `mime_type`: Metadata
+- **Notes:**
+  - Read-only operation: the source file in Box is not modified.
+  - Includes numbering context (`## Slide N` for PowerPoint, `## Page N` for PDF).
+  - Legacy `.ppt` files are not supported by this extractor.
+- **Use Case:** Convert presentation/document content into an LLM-friendly format while preserving slide/page association
+
 ---
 
 ## File Transfer Tools
 
 Upload and download file content between local systems and Box.
 
-### 19. `box_file_download_tool`
+### 20. `box_file_download_tool`
 Download a file from Box and optionally save it locally.
 - **Arguments:**
   - `file_id` (str): The ID of the file to download
@@ -196,7 +211,7 @@ Download a file from Box and optionally save it locally.
   - `path_saved` (optional): Path where file was saved locally
 - **Use Case:** Retrieve file content for processing or local storage
 
-### 20. `box_file_upload_tool`
+### 21. `box_file_upload_tool`
 Upload content as a file to Box.
 - **Arguments:**
   - `content` (str | bytes): The content to upload (text or binary data)
@@ -211,7 +226,7 @@ Upload content as a file to Box.
 
 Extract text and structured content from files.
 
-### 21. `box_file_text_extract_tool`
+### 22. `box_file_text_extract_tool`
 Extract text from a file in Box (returns markdown or plain text).
 - **Arguments:**
   - `file_id` (str): The ID of the file to extract text from
@@ -231,6 +246,6 @@ Extract text from a file in Box (returns markdown or plain text).
 | **Tagging** | tag_list, tag_add, tag_remove | Organize and categorize files |
 | **Thumbnails** | thumbnail_url, thumbnail_download | Work with file previews |
 | **Transfer** | download, upload | Move content to/from Box |
-| **Content** | text_extract | Extract file content |
+| **Content** | text_extract, presentation_extract | Extract file content for downstream processing |
 
 Refer to [src/tools/box_tools_file.py](src/tools/box_tools_file.py), [src/tools/box_tools_file_transfer.py](src/tools/box_tools_file_transfer.py), and [src/tools/box_tools_file_representation.py](src/tools/box_tools_file_representation.py) for implementation details.
