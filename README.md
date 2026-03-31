@@ -123,6 +123,154 @@ Below is a summary of the available tools:
 | [box_tools_users](docs/box_tools_users.md)          | User management and queries                      |
 | [box_tools_web_link](docs/box_tools_web_link.md)       | Web link creation and management                 |
 
+## Environment Variables
+
+All environment variables can be set in a `.env` file or your system environment.
+
+### Server Configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `HOST` | Server bind address | `localhost` | `0.0.0.0` |
+| `PORT` | Server port | `8005` | `8005` |
+| `LOG_LEVEL` | Logging level | `INFO` | `debug` |
+
+### Box API Authentication
+
+| Variable | Description | Required For | Example |
+|----------|-------------|-------------|---------|
+| `BOX_CLIENT_ID` | OAuth / CCG client ID | OAuth, CCG | `abc123def456` |
+| `BOX_CLIENT_SECRET` | OAuth / CCG client secret | OAuth, CCG | `secret_xyz` |
+| `BOX_REDIRECT_URL` | OAuth redirect URL | OAuth | `http://localhost:8000/callback` |
+| `BOX_SUBJECT_TYPE` | CCG subject type | CCG | `enterprise` or `user` |
+| `BOX_SUBJECT_ID` | CCG subject ID | CCG | `12345678` |
+| `BOX_PUBLIC_KEY_ID` | JWT public key ID | JWT | `abcd1234` |
+| `BOX_PRIVATE_KEY` | JWT private key contents | JWT | `-----BEGIN ENCRYPTED PRIVATE KEY-----...` |
+| `BOX_PRIVATE_KEY_PASSPHRASE` | JWT private key passphrase | JWT | `mypassphrase` |
+| `BOX_JWT_CONFIG_FILE` | Path to JWT config file | JWT (alternative) | `config/jwt_config.json` |
+
+### MCP Server Authentication
+
+| Variable | Description | Required For | Example |
+|----------|-------------|-------------|---------|
+| `BOX_MCP_SERVER_AUTH_TOKEN` | Bearer token for MCP server auth | `--mcp-auth-type token` | `my-secret-token-123` |
+| `OAUTH_PROTECTED_RESOURCES_CONFIG_FILE` | Path to OAuth protected resources config | `--mcp-auth-type oauth` | `.oauth-protected-resource.json` |
+
+### Tool Filtering
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TOOL_GROUPS_DISABLE` | Comma-separated tool groups to disable (blocklist) | `ai,doc_gen,shared_link` |
+| `TOOL_GROUPS_ENABLE` | Comma-separated tool groups to enable (allowlist) | `search,file,folder` |
+| `TOOLS_DISABLE` | Comma-separated tool function names to disable | `box_file_delete_tool,box_file_move_tool` |
+| `TOOLS_ENABLE` | Comma-separated tool function names to enable | `box_search_tool,box_ai_ask_file_single_tool` |
+
+> **Note**: Allowlist (`*_ENABLE`) always takes precedence over blocklist (`*_DISABLE`). Individual tool filtering is applied after group filtering.
+
+---
+
+## Deploying to Azure Container Registry & Container Apps
+
+### Building and Pushing the Docker Image to ACR
+
+The Azure Container Registry environment is **`custommcps`**. Version your images with a tag when pushing updates.
+
+```sh
+# Log in to ACR
+az acr login --name custommcps
+
+# Build and tag the image with a version
+# From root folder
+docker build -t custommcps.azurecr.io/mcp-server-box:v1 .
+
+# Push both tags
+docker push custommcps.azurecr.io/mcp-server-box:v1
+```
+
+# Update Image in Azure Container Registry without Building Locally
+az acr build --registry custommcps --image mcp-server-box:v1-http .  
+```
+
+### Updating the Azure Container App
+
+The Container App endpoint is:
+```
+https://box-mcp-http.purpleplant-bb9db0cb.eastus2.azurecontainerapps.io/mcp
+```
+
+To update the container to use a new image version:
+
+```sh
+az containerapp update \
+  --name box-mcp-http \
+  --resource-group <your-resource-group> \
+  --image custommcps.azurecr.io/mcp-server-box:v1.1.0
+```
+
+To verify the update:
+
+```sh
+az containerapp show \
+  --name box-mcp-http \
+  --resource-group <your-resource-group> \
+  --query "properties.template.containers[0].image"
+```
+
+Once updated, the MCP server is accessible at the endpoint above. Clients (e.g., Claude Desktop in HTTP mode) should connect to:
+```
+https://box-mcp-http.purpleplant-bb9db0cb.eastus2.azurecontainerapps.io/mcp
+```
+
+---
+
+## EQT - Box AI PDF & PowerPoint Parser
+
+### Overview
+
+The `box_ai_parse_pdf_powerpoint` tool is an EQT-specific addition that uses a **Box AI Agent** to extract full structured text content from PDF and PowerPoint files, including text embedded in images, charts, and diagrams.
+
+This tool is designed for use cases such as parsing vision decks, investment memos, and other structured documents stored in Box.
+
+### How It Works
+
+1. The tool receives a **Box file ID** and an optional custom prompt
+2. It calls the Box AI Agent (default agent ID: `66136138`) via the `box-ai-agents-toolkit`
+3. The AI Agent processes the file slide-by-slide (PowerPoint) or page-by-page (PDF)
+4. It returns structured text extraction with the following per-slide/page:
+   - **Slide Number** - Metadata identifier
+   - **Title** - Top-most prominent text element
+   - **Text** - All visible text, preserved exactly as shown
+   - **Tables** - Table content and structure
+   - **Charts** - Chart type, title, axes, legend, and visible values
+   - **Visuals** - Diagrams, org charts, images/screenshots, and icons with semantic meaning
+
+### Key Behaviors
+
+- Content is **never summarized or paraphrased** - all text is returned verbatim
+- Each slide/page is treated **independently** - no merging across slides
+- Decorative backgrounds and design elements are **ignored**
+- Title detection is **position-based** (top-most text), not inferred from meaning
+
+### Usage
+
+The tool is registered under the `ai` tool group. To ensure it is available, make sure the `ai` group is not disabled:
+
+```sh
+# Enable only specific groups including ai
+TOOL_GROUPS_ENABLE=ai,search,file
+
+# Or enable just this specific tool
+TOOLS_ENABLE=box_ai_pdf_powerpoint_parser_tool
+```
+
+### Connection to Box AI Agent
+
+The tool connects to a **Box AI Agent** configured in the Box platform. The default agent ID (`66136138`) is an agent set up to handle document parsing with vision capabilities. To use a different agent, pass a custom `ai_agent_id` parameter when calling the tool.
+
+Box AI Agents can be managed in the Box Admin Console under **Platform > AI Agents**.
+
+---
+
 ## Box Community MCP Server Operations Details
 
 ### Command line interface parameters
