@@ -47,6 +47,9 @@ class ServerConfig:
     mcp_auth_type: McpAuthType = McpAuthType.TOKEN
     server_name: str = "Box Community MCP"
     tool_groups_disable: set[str] = field(default_factory=set)
+    tool_groups_enable: set[str] = field(default_factory=set)
+    tools_disable: set[str] = field(default_factory=set)
+    tools_enable: set[str] = field(default_factory=set)
 
 
 def _parse_csv_env_set(env_value: Optional[str]) -> set[str]:
@@ -123,6 +126,9 @@ class AppConfig:
         # Server configuration (defaults used, can be overridden at runtime)
         server_config = ServerConfig(
             tool_groups_disable=_parse_csv_env_set(os.getenv("TOOL_GROUPS_DISABLE")),
+            tool_groups_enable=_parse_csv_env_set(os.getenv("TOOL_GROUPS_ENABLE")),
+            tools_disable=_parse_csv_env_set(os.getenv("TOOLS_DISABLE")),
+            tools_enable=_parse_csv_env_set(os.getenv("TOOLS_ENABLE")),
         )
 
         # Box API configuration

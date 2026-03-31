@@ -23,3 +23,38 @@ def test_get_enabled_registrars_ignores_unknown_groups():
     registrars = _get_enabled_registrars({"not_a_group"})
 
     assert registrars == list(TOOL_GROUP_REGISTRARS.values())
+
+
+def test_get_enabled_registrars_enable_only_specified_groups():
+    registrars = _get_enabled_registrars(set(), enabled_groups={"search", "file"})
+
+    expected = [
+        registrar
+        for group_name, registrar in TOOL_GROUP_REGISTRARS.items()
+        if group_name in {"search", "file"}
+    ]
+    assert registrars == expected
+
+
+def test_get_enabled_registrars_enable_takes_precedence_over_disable():
+    registrars = _get_enabled_registrars(
+        {"search"}, enabled_groups={"search", "file"}
+    )
+
+    expected = [
+        registrar
+        for group_name, registrar in TOOL_GROUP_REGISTRARS.items()
+        if group_name in {"search", "file"}
+    ]
+    assert registrars == expected
+
+
+def test_get_enabled_registrars_enable_ignores_unknown_groups():
+    registrars = _get_enabled_registrars(set(), enabled_groups={"search", "not_real"})
+
+    expected = [
+        registrar
+        for group_name, registrar in TOOL_GROUP_REGISTRARS.items()
+        if group_name in {"search"}
+    ]
+    assert registrars == expected

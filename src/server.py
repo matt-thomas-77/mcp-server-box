@@ -112,16 +112,45 @@ def create_mcp_server(
     return mcp
 
 
-def _get_enabled_registrars(disabled_groups: set[str]):
-    """Return registrars after filtering out disabled tool groups."""
-    invalid_groups = sorted(disabled_groups - set(TOOL_GROUP_REGISTRARS.keys()))
+def _get_enabled_registrars(
+    disabled_groups: set[str],
+    enabled_groups: set[str] | None = None,
+):
+    """Return registrars after filtering by enabled/disabled tool groups.
+
+    If enabled_groups is set, only those groups are enabled (allowlist mode)
+    and disabled_groups is ignored. Otherwise, disabled_groups is used as a
+    blocklist.
+    """
+    valid_groups = set(TOOL_GROUP_REGISTRARS.keys())
+
+    if enabled_groups:
+        if disabled_groups:
+            logger.warning(
+                "Both TOOL_GROUPS_ENABLE and TOOL_GROUPS_DISABLE are set. "
+                "TOOL_GROUPS_ENABLE takes precedence; TOOL_GROUPS_DISABLE is ignored.",
+            )
+        invalid_groups = sorted(enabled_groups - valid_groups)
+        if invalid_groups:
+            logger.warning(
+                "Ignoring unknown tool group(s) in TOOL_GROUPS_ENABLE: %s",
+                ", ".join(invalid_groups),
+            )
+        enabled_groups = enabled_groups & valid_groups
+        return [
+            registrar
+            for group_name, registrar in TOOL_GROUP_REGISTRARS.items()
+            if group_name in enabled_groups
+        ]
+
+    invalid_groups = sorted(disabled_groups - valid_groups)
     if invalid_groups:
         logger.warning(
             "Ignoring unknown tool group(s) in TOOL_GROUPS_DISABLE: %s",
             ", ".join(invalid_groups),
         )
 
-    disabled_groups = disabled_groups & set(TOOL_GROUP_REGISTRARS.keys())
+    disabled_groups = disabled_groups & valid_groups
     return [
         registrar
         for group_name, registrar in TOOL_GROUP_REGISTRARS.items()
@@ -129,12 +158,21 @@ def _get_enabled_registrars(disabled_groups: set[str]):
     ]
 
 
-def register_tools(mcp: FastMCP, disabled_groups: set[str] | None = None) -> None:
+def register_tools(
+    mcp: FastMCP,
+    disabled_groups: set[str] | None = None,
+    enabled_groups: set[str] | None = None,
+    disabled_tools: set[str] | None = None,
+    enabled_tools: set[str] | None = None,
+) -> None:
     """Register all enabled tools with the MCP server."""
     disabled_groups = disabled_groups or set()
+    enabled_groups = enabled_groups or set()
     register_all_tools(
         mcp,
-        _get_enabled_registrars(disabled_groups),
+        _get_enabled_registrars(disabled_groups, enabled_groups or None),
+        enabled_tools=enabled_tools or None,
+        disabled_tools=disabled_tools or None,
     )
 
 
@@ -154,6 +192,9 @@ def create_server_info_tool(
             "mcp auth": config.mcp_auth_type,
             "box auth": config.box_auth,
             "tool_groups_disable": sorted(config.tool_groups_disable),
+            "tool_groups_enable": sorted(config.tool_groups_enable),
+            "tools_disable": sorted(config.tools_disable),
+            "tools_enable": sorted(config.tools_enable),
         }
 
         if config.transport != TransportType.STDIO.value:

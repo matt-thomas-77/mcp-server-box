@@ -57,11 +57,16 @@ OAUTH_PROTECTED_RESOURCES_CONFIG_FILE = .oauth-protected-resource.json
 > - The `BOX_MCP_SERVER_AUTH_TOKEN` is used to authenticate the MCP client to the MCP server when using `--mcp-auth-type=token` (independent of Box authentication)
 
 ### Optional tool group filtering (server-side)
-If your MCP client does not support tool-level toggles, you can disable tool groups at the server using `TOOL_GROUPS_DISABLE`.
+If your MCP client does not support tool-level toggles, you can filter tool groups at the server using environment variables.
 
-Example:
+**Disable specific groups** (blocklist) — all groups enabled except those listed:
 ```
 TOOL_GROUPS_DISABLE = ai,doc_gen,shared_link
+```
+
+**Enable only specific groups** (allowlist) — only the listed groups are enabled, all others are disabled:
+```
+TOOL_GROUPS_ENABLE = search,file,folder
 ```
 
 Supported group names:
@@ -70,8 +75,27 @@ Supported group names:
 Notes:
 - Values are case-insensitive and comma-separated.
 - Unknown group names are ignored with a warning.
-- If unset or empty, all tool groups are enabled.
+- If neither variable is set, all tool groups are enabled.
+- If both are set, `TOOL_GROUPS_ENABLE` takes precedence and `TOOL_GROUPS_DISABLE` is ignored.
 
+### Optional individual tool filtering (server-side)
+For finer-grained control, you can filter individual tools by their function name.
+
+**Disable specific tools** (blocklist):
+```
+TOOLS_DISABLE = box_file_delete_tool,box_file_move_tool
+```
+
+**Enable only specific tools** (allowlist) — only the listed tools are registered, all others are disabled:
+```
+TOOLS_ENABLE = box_search_tool,box_ai_ask_file_single_tool,box_file_info_tool
+```
+
+Notes:
+- Tool names are the function names (e.g. `box_search_tool`, `box_ai_ask_file_single_tool`).
+- Values are case-insensitive and comma-separated.
+- If both are set, `TOOLS_ENABLE` takes precedence and `TOOLS_DISABLE` is ignored.
+- Individual tool filtering is applied after group filtering — a tool must pass both filters to be registered.
 
 
 ### Run the MCP server in STDIO mode:
