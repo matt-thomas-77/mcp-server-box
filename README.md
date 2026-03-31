@@ -185,7 +185,6 @@ docker build -t custommcps.azurecr.io/mcp-server-box:v1 .
 
 # Push both tags
 docker push custommcps.azurecr.io/mcp-server-box:v1
-```
 
 # Update Image in Azure Container Registry without Building Locally
 az acr build --registry custommcps --image mcp-server-box:v1-http .  
@@ -215,6 +214,9 @@ az containerapp show \
   --resource-group <your-resource-group> \
   --query "properties.template.containers[0].image"
 ```
+
+You can also update the container through the Azure Portal, by going to Container Apps --> 
+box-mcp-http --> Application --> Containers
 
 Once updated, the MCP server is accessible at the endpoint above. Clients (e.g., Claude Desktop in HTTP mode) should connect to:
 ```
