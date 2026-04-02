@@ -337,9 +337,11 @@ async def test_box_file_presentation_extract_tool_success():
         patch("tools.box_tools_file.box_file_info") as mock_info,
         patch("tools.box_tools_file.box_file_download") as mock_download,
         patch(
-            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+            "tools.box_tools_file._extract_pptx_content_from_bytes"
         ) as mock_extract,
     ):
+        from mcp.types import TextContent
+
         mock_get_client.return_value = "client"
         mock_info.return_value = {"name": "deck.pptx"}
         mock_download.return_value = (
@@ -347,18 +349,20 @@ async def test_box_file_presentation_extract_tool_success():
             b"pptx-bytes",
             "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         )
-        mock_extract.return_value = {
-            "representation": "text/markdown",
-            "slide_count": 2,
-            "content": "## Slide 1\n- Intro",
-        }
+        mock_extract.return_value = [
+            TextContent(type="text", text="## Slide 1\n- Intro"),
+            TextContent(type="text", text="## Slide 2\n- Details"),
+        ]
 
         result = await box_file_presentation_extract_tool(ctx, file_id)
 
-        assert result["representation"] == "text/markdown"
-        assert result["slide_count"] == 2
-        assert result["file_id"] == file_id
-        assert result["file_name"] == "deck.pptx"
+        assert isinstance(result, list)
+        # First block is the metadata header
+        assert result[0].type == "text"
+        assert "deck.pptx" in result[0].text
+        assert file_id in result[0].text
+        # Remaining blocks are from the extractor
+        assert result[1].text == "## Slide 1\n- Intro"
         mock_extract.assert_called_once_with(b"pptx-bytes")
 
 
@@ -371,9 +375,11 @@ async def test_box_file_presentation_extract_tool_success_with_nested_file_name(
         patch("tools.box_tools_file.box_file_info") as mock_info,
         patch("tools.box_tools_file.box_file_download") as mock_download,
         patch(
-            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+            "tools.box_tools_file._extract_pptx_content_from_bytes"
         ) as mock_extract,
     ):
+        from mcp.types import TextContent
+
         mock_get_client.return_value = "client"
         mock_info.return_value = {
             "file": {
@@ -386,16 +392,14 @@ async def test_box_file_presentation_extract_tool_success_with_nested_file_name(
             b"pptx-bytes",
             "application/octet-stream",
         )
-        mock_extract.return_value = {
-            "representation": "text/markdown",
-            "slide_count": 1,
-            "content": "## Slide 1\n- Intro",
-        }
+        mock_extract.return_value = [
+            TextContent(type="text", text="## Slide 1\n- Intro"),
+        ]
 
         result = await box_file_presentation_extract_tool(ctx, file_id)
 
-        assert result["representation"] == "text/markdown"
-        assert result["file_name"] == "Air Program Deck_Final.pptx"
+        assert isinstance(result, list)
+        assert "Air Program Deck_Final.pptx" in result[0].text
         mock_extract.assert_called_once_with(b"pptx-bytes")
 
 
@@ -446,22 +450,22 @@ async def test_box_file_presentation_extract_tool_succeeds_when_metadata_missing
         patch("tools.box_tools_file.box_file_info") as mock_info,
         patch("tools.box_tools_file.box_file_download") as mock_download,
         patch(
-            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+            "tools.box_tools_file._extract_pptx_content_from_bytes"
         ) as mock_extract,
     ):
+        from mcp.types import TextContent
+
         mock_get_client.return_value = "client"
         mock_info.return_value = {"id": file_id}
         mock_download.return_value = (None, b"pptx-bytes", "")
-        mock_extract.return_value = {
-            "representation": "text/markdown",
-            "slide_count": 1,
-            "content": "## Slide 1\n- Intro",
-        }
+        mock_extract.return_value = [
+            TextContent(type="text", text="## Slide 1\n- Intro"),
+        ]
 
         result = await box_file_presentation_extract_tool(ctx, file_id)
 
-        assert result["representation"] == "text/markdown"
-        assert result["file_id"] == file_id
+        assert isinstance(result, list)
+        assert file_id in result[0].text
 
 
 @pytest.mark.asyncio
@@ -473,7 +477,7 @@ async def test_box_file_presentation_extract_tool_parse_fail_with_pptx_hint():
         patch("tools.box_tools_file.box_file_info") as mock_info,
         patch("tools.box_tools_file.box_file_download") as mock_download,
         patch(
-            "tools.box_tools_file._extract_pptx_markdown_from_bytes"
+            "tools.box_tools_file._extract_pptx_content_from_bytes"
         ) as mock_extract,
     ):
         mock_get_client.return_value = "client"

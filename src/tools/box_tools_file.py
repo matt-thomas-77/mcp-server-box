@@ -1,4 +1,5 @@
 import base64
+import logging
 from datetime import datetime
 from io import BytesIO
 from typing import Any
@@ -25,8 +26,11 @@ from box_ai_agents_toolkit import (
     box_file_unlock,
 )
 from mcp.server.fastmcp import Context
+from mcp.types import ImageContent, TextContent
 
 from tools.box_tools_generic import get_box_client
+
+logger = logging.getLogger(__name__)
 
 PPTX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 PPT_MIME_TYPE = "application/vnd.ms-powerpoint"
@@ -73,8 +77,122 @@ def _collect_shape_text(shape: Any) -> list[str]:
     return collected
 
 
-def _extract_pptx_markdown_from_bytes(file_content: bytes) -> dict[str, Any]:
-    """Extract markdown and metadata from a .pptx payload."""
+# Map python-pptx content types to MIME types for images
+_PPTX_IMAGE_CONTENT_TYPES: dict[str, str] = {
+    "image/png": "image/png",
+    "image/jpeg": "image/jpeg",
+    "image/gif": "image/gif",
+    "image/bmp": "image/bmp",
+    "image/tiff": "image/tiff",
+    "image/x-emf": "image/x-emf",
+    "image/x-wmf": "image/x-wmf",
+    "image/svg+xml": "image/svg+xml",
+}
+
+# Content types that LLMs can actually interpret visually
+_LLM_VISIBLE_IMAGE_TYPES: set[str] = {
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+}
+
+# Image sizing constraints
+_IMAGE_MAX_DIMENSION = 1024  # px – longest side after resize
+_IMAGE_JPEG_QUALITY = 80
+# Total base64 image budget (bytes).  The Databricks MCP proxy enforces a 4 MB
+# response cap, so we reserve ~1 MB for text/metadata and allow ~3 MB for images.
+_IMAGE_TOTAL_BUDGET_B64 = 3 * 1024 * 1024
+
+
+def _compress_image_bytes(image_blob: bytes) -> tuple[bytes, str]:
+    """Resize and compress an image to fit LLM consumption constraints.
+
+    Returns (compressed_bytes, mime_type).
+    """
+    from PIL import Image as PILImage
+
+    img = PILImage.open(BytesIO(image_blob))
+
+    # Resize if either dimension exceeds the cap
+    if max(img.size) > _IMAGE_MAX_DIMENSION:
+        img.thumbnail((_IMAGE_MAX_DIMENSION, _IMAGE_MAX_DIMENSION), PILImage.LANCZOS)
+
+    buf = BytesIO()
+
+    # Preserve transparency as PNG; everything else becomes JPEG for size
+    if img.mode in ("RGBA", "LA", "PA") or (
+        img.mode == "P" and "transparency" in img.info
+    ):
+        img.save(buf, format="PNG", optimize=True)
+        return buf.getvalue(), "image/png"
+
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.save(buf, format="JPEG", quality=_IMAGE_JPEG_QUALITY, optimize=True)
+    return buf.getvalue(), "image/jpeg"
+
+
+def _collect_shape_images(shape: Any, slide_number: int) -> list[ImageContent]:
+    """Extract images from a shape, returning MCP ImageContent blocks."""
+    images: list[ImageContent] = []
+
+    image_obj = getattr(shape, "image", None)
+    if image_obj is None:
+        return images
+
+    try:
+        content_type = image_obj.content_type
+        image_blob = image_obj.blob
+    except Exception:
+        logger.debug(
+            "Slide %d: could not read image blob from shape '%s'",
+            slide_number,
+            getattr(shape, "name", "unknown"),
+        )
+        return images
+
+    mime_type = _PPTX_IMAGE_CONTENT_TYPES.get(content_type, content_type)
+
+    if mime_type not in _LLM_VISIBLE_IMAGE_TYPES:
+        logger.debug(
+            "Slide %d: skipping non-visual image type %s",
+            slide_number,
+            mime_type,
+        )
+        return images
+
+    try:
+        compressed_blob, compressed_mime = _compress_image_bytes(image_blob)
+    except Exception:
+        logger.debug(
+            "Slide %d: failed to compress image from shape '%s'",
+            slide_number,
+            getattr(shape, "name", "unknown"),
+        )
+        return images
+
+    encoded = base64.b64encode(compressed_blob).decode("utf-8")
+    images.append(
+        ImageContent(
+            type="image",
+            data=encoded,
+            mimeType=compressed_mime,
+        )
+    )
+
+    return images
+
+
+def _extract_pptx_content_from_bytes(
+    file_content: bytes,
+) -> dict[str, Any] | list[TextContent | ImageContent]:
+    """Extract markdown text and images from a .pptx payload.
+
+    Returns either:
+    - A dict with an ``"error"`` key on failure, or
+    - A list of ``TextContent`` / ``ImageContent`` blocks on success.
+    """
     try:
         from pptx import Presentation
     except ImportError:
@@ -88,37 +206,63 @@ def _extract_pptx_markdown_from_bytes(file_content: bytes) -> dict[str, Any]:
         return {
             "error": "Unable to parse file as .pptx PowerPoint presentation.",
         }
+
+    content_blocks: list[TextContent | ImageContent] = []
     markdown_parts: list[str] = []
+    image_budget_remaining = _IMAGE_TOTAL_BUDGET_B64
 
     for slide_number, slide in enumerate(presentation.slides, start=1):
-        markdown_parts.append(f"## Slide {slide_number}")
+        slide_markdown: list[str] = [f"## Slide {slide_number}"]
 
         title_shape = getattr(slide.shapes, "title", None)
         if title_shape and getattr(title_shape, "text", "").strip():
-            markdown_parts.append(f"Title: {title_shape.text.strip()}")
+            slide_markdown.append(f"Title: {title_shape.text.strip()}")
 
         body_lines: list[str] = []
+        slide_images: list[ImageContent] = []
+
         for shape in slide.shapes:
             body_lines.extend(_collect_shape_text(shape))
+            if image_budget_remaining > 0:
+                slide_images.extend(_collect_shape_images(shape, slide_number))
 
         if body_lines:
-            markdown_parts.append("\n".join(f"- {line}" for line in body_lines))
+            slide_markdown.append("\n".join(f"- {line}" for line in body_lines))
         else:
-            markdown_parts.append("- (No extractable slide body text found)")
+            slide_markdown.append("- (No extractable slide body text found)")
 
         if slide.has_notes_slide and slide.notes_slide.notes_text_frame:
             notes_text = slide.notes_slide.notes_text_frame.text.strip()
             if notes_text:
-                markdown_parts.append("Notes:")
-                markdown_parts.append(notes_text)
+                slide_markdown.append("Notes:")
+                slide_markdown.append(notes_text)
 
-        markdown_parts.append("")
+        slide_markdown.append("")
+        markdown_parts.extend(slide_markdown)
 
-    return {
-        "representation": "text/markdown",
-        "slide_count": len(presentation.slides),
-        "content": "\n".join(markdown_parts).strip(),
-    }
+        # Emit a text block for this slide followed by its images
+        content_blocks.append(
+            TextContent(type="text", text="\n".join(slide_markdown).strip())
+        )
+        if slide_images:
+            # Label each image with its slide number, respecting the budget
+            for idx, img in enumerate(slide_images, start=1):
+                img_b64_size = len(img.data)
+                if img_b64_size > image_budget_remaining:
+                    content_blocks.append(
+                        TextContent(
+                            type="text",
+                            text=f"Slide {slide_number} — Image {idx} of {len(slide_images)} (omitted, response size limit reached)",
+                        )
+                    )
+                    image_budget_remaining = 0
+                    continue
+                label = f"Slide {slide_number} — Image {idx} of {len(slide_images)}"
+                content_blocks.append(TextContent(type="text", text=label))
+                content_blocks.append(img)
+                image_budget_remaining -= img_b64_size
+
+    return content_blocks
 
 
 def _extract_pdf_markdown_from_bytes(file_content: bytes) -> dict[str, Any]:
@@ -491,9 +635,16 @@ async def box_file_thumbnail_download_tool(
 async def box_file_presentation_extract_tool(
     ctx: Context,
     file_id: str,
-) -> dict[str, Any]:
+) -> dict[str, Any] | list[TextContent | ImageContent]:
     """
-    Extract LLM-ready markdown text from a PowerPoint or PDF file in Box.
+    Extract LLM-ready content from a PowerPoint or PDF file in Box.
+
+    For .pptx files the response includes both markdown text **and** embedded
+    slide images so that the consuming agent can visually interpret charts,
+    diagrams, and other non-text content.  Each image is labelled with its
+    slide number.
+
+    For PDF files the response contains markdown text only.
 
     This tool only reads file bytes and does not modify the original Box file.
 
@@ -501,7 +652,7 @@ async def box_file_presentation_extract_tool(
         file_id (str): The ID of the file to process.
 
     Returns:
-        dict[str, Any]: Markdown content with slide/page context, or an error.
+        Mixed content blocks (text + images) for .pptx, or a dict for PDF / errors.
     """
     box_client = get_box_client(ctx)
 
@@ -541,29 +692,15 @@ async def box_file_presentation_extract_tool(
         }
 
     is_pdf_hint = mime_type == PDF_MIME_TYPE or file_name.lower().endswith(".pdf")
+    is_pptx_hint = mime_type == PPTX_MIME_TYPE or file_name.lower().endswith(".pptx")
+
     if is_pdf_hint:
         extracted = _extract_pdf_markdown_from_bytes(file_content)
-    else:
-        extracted = _extract_pptx_markdown_from_bytes(file_content)
-
-    # If parsing succeeded, return content regardless of metadata quality.
-    if "error" not in extracted:
-        extracted["file_id"] = file_id
-        extracted["file_name"] = file_name
-        extracted["mime_type"] = mime_type
-        return extracted
-
-    # If metadata claims .pptx/.pdf but parsing failed, return a more specific error.
-    is_pptx_hint = mime_type == PPTX_MIME_TYPE or file_name.lower().endswith(".pptx")
-    if is_pptx_hint:
-        return {
-            "error": "Unable to parse file as .pptx PowerPoint presentation. The file may be corrupted or not a valid .pptx.",
-            "mime_type": mime_type,
-            "file_name": file_name,
-            "file_id": file_id,
-        }
-
-    if is_pdf_hint:
+        if "error" not in extracted:
+            extracted["file_id"] = file_id
+            extracted["file_name"] = file_name
+            extracted["mime_type"] = mime_type
+            return extracted
         return {
             "error": "Unable to parse file as PDF. The file may be corrupted or not a valid PDF.",
             "mime_type": mime_type,
@@ -571,19 +708,42 @@ async def box_file_presentation_extract_tool(
             "file_id": file_id,
         }
 
-    # Unknown metadata and failed parse: treat as non-PowerPoint.
-    if extracted.get("error") in {
-        "python-pptx is not installed. Install 'python-pptx' to enable PowerPoint extraction.",
-        "pypdf is not installed. Install 'pypdf' to enable PDF extraction.",
-    }:
-        extracted["file_id"] = file_id
-        extracted["file_name"] = file_name
-        extracted["mime_type"] = mime_type
-        return extracted
+    # --- .pptx path: return rich content (text + images) ---
+    extracted = _extract_pptx_content_from_bytes(file_content)
 
-    return {
-        "error": "File is not a supported presentation format (.pptx or .pdf).",
-        "mime_type": mime_type,
-        "file_name": file_name,
-        "file_id": file_id,
-    }
+    # If extraction returned a dict it means an error occurred.
+    if isinstance(extracted, dict):
+        if extracted.get("error") in {
+            "python-pptx is not installed. Install 'python-pptx' to enable PowerPoint extraction.",
+        }:
+            extracted["file_id"] = file_id
+            extracted["file_name"] = file_name
+            extracted["mime_type"] = mime_type
+            return extracted
+
+        if is_pptx_hint:
+            return {
+                "error": "Unable to parse file as .pptx PowerPoint presentation. The file may be corrupted or not a valid .pptx.",
+                "mime_type": mime_type,
+                "file_name": file_name,
+                "file_id": file_id,
+            }
+
+        return {
+            "error": "File is not a supported presentation format (.pptx or .pdf).",
+            "mime_type": mime_type,
+            "file_name": file_name,
+            "file_id": file_id,
+        }
+
+    # Prepend a metadata header so the agent has file context.
+    header = TextContent(
+        type="text",
+        text=(
+            f"**File:** {file_name}\n"
+            f"**File ID:** {file_id}\n"
+            f"**MIME type:** {mime_type}\n"
+            f"**Format:** PowerPoint (.pptx)"
+        ),
+    )
+    return [header, *extracted]

@@ -77,6 +77,14 @@ def auth_validate_token(scope, config: "McpAuthConfig") -> Optional[JSONResponse
 
     expected_token = config.auth_token
 
+    # Temporary debug: log all incoming headers to diagnose Azure Foundry auth
+    for key, value in scope.get("headers", []):
+        key_str = key.decode("latin-1") if isinstance(key, bytes) else str(key)
+        val_str = value.decode("latin-1") if isinstance(value, bytes) else str(value)
+        # Mask values for security, show only first/last 4 chars
+        masked = val_str[:4] + "..." + val_str[-4:] if len(val_str) > 12 else "***"
+        logger.debug(f"[Token] Header: {key_str} = {masked}")
+
     token, source_header = _extract_request_token(scope)
 
     # Validate authentication

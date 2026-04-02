@@ -41,7 +41,7 @@ async def box_ai_ask_file_single_tool(
 
 
 async def box_ai_pdf_powerpoint_parser_tool(
-    ctx: Context, file_id: str, prompt: str = PDF_POWERPOINT_PARSER_PROMPT, 
+    ctx: Context, file_id: str, prompt: str = "", 
     ai_agent_id: str = "66136138"
 ) -> dict:
     """
