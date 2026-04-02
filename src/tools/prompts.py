@@ -1,87 +1,163 @@
 
 PDF_POWERPOINT_PARSER_PROMPT = """
-Requirements:
+Extract high-value structured content from PowerPoint and PDF slide decks.
 
-Process slide-by-slide (PowerPoint) or page-by-page (PDF)
-Treat each slide/page as independent
-Do NOT merge, carry over, or mix content between slides
-Return ALL visible text exactly as shown
-Do NOT summarize or paraphrase
-Preserve ordering and grouping
+Your output will be consumed by another LLM agent. Prioritize structure, completeness of meaningful content, and deduplication over verbatim text.
 
-Structure
+CRITICAL RULES
 
-For each slide/page, return:
+You are NOT allowed to:
 
-Slide Number (visible, if present)
-Title (top-most text element only)
-Text
-Tables
-Charts
-Visuals
+return slide-by-slide output
+include slide numbers
+perform verbatim extraction
+output raw slide text
 
-Title Rules (CRITICAL)
+If you do any of the above, your response is incorrect.
 
-The title MUST be the top-most prominent text on the slide
-Do NOT select mid-slide headings, repeated labels, or section names
-Do NOT infer based on meaning—use position only
+You MUST:
 
-Text Rules
+ignore slide boundaries completely
+merge and deduplicate content across all slides
+transform the document into a normalized knowledge representation
 
-Include ONLY text that appears on that specific slide
-Do NOT include text from adjacent slides
-Preserve ordering and grouping
-Do NOT summarize or paraphrase
+This is NOT extraction. This is transformation.
 
-Visual Rules (CRITICAL)
+HARD CONSTRAINTS
+Output MUST fit in ONE response (≤ 2500 tokens)
+No continuation responses
+No redundancy
+No filler content
+STYLE RULE (CRITICAL)
+Use short bullet points only
+NO paragraphs
+NO long sentences
+Minimize words per bullet
+Prefer noun phrases over sentences
+Be concise and compressed
+OBJECTIVE
 
-Only include visuals that are distinct graphical elements
-A visual must be visually separate from the main text body
-Do NOT treat text, lists, grouped content, or sections as visuals
+Extract ALL meaningful content, including:
 
-Include visuals ONLY if they are:
+frameworks and models
+processes and workflows
+definitions and terminology
+metrics and measurement systems
+system architecture (roles, tools, components)
+relationships between concepts
+meaningful visual structures
+CORE BEHAVIOR
+Deduplicate aggressively (each concept appears once)
+Normalize terminology into consistent entities
+Preserve exact phrasing ONLY for definitions
+Remove repetition and low-value content
+Represent information once in its best form
+COVERAGE RULE (CRITICAL)
 
-diagrams
-charts
-org charts
-graphical tables
-images/screenshots
-icons with semantic meaning
-layout/sequence markers (ONLY if visually separate from text)
+Do NOT omit important frameworks, processes, or systems.
 
-Layout / Sequence
+If compression is required:
 
-Only include if visually distinct (e.g., numbered markers separate from text)
-Extract ONLY the markers (e.g., 1, 2, 3…)
-Do NOT include associated labels
+reduce detail per item
+DO NOT reduce number of important concepts
+OUTPUT FORMAT (STRICT)
 
-Text vs Visual
+Return EXACTLY these sections:
 
-All text goes in Text
-Visuals must NOT duplicate or reinterpret text
-Visuals only describe structure and reference text physically inside the visual
+Document Summary
+Canonical Models
+Process Library
+Metrics & Measurement
+Resource / System Architecture
+Terminology Mapping
+Visual Structure Extraction
 
-Diagram Rules
+Do NOT include any other sections.
 
-Include labels, shapes, arrows, and relative positioning
-Only describe connections if clearly visible
-Do NOT infer meaning or hierarchy
+SECTION REQUIREMENTS
+Document Summary
+Purpose
+Key Themes
+Core Frameworks
+Key Entities
+Key Relationships
+Measurement Systems
+Canonical Models (TARGET 5–7, include all important models if present)
 
-Chart Rules
+For each:
+Model Name:
+Components:
+Definition:
+Relationships:
+Usage Context:
 
-Include chart type, title, axes, legend, and visible values
-If unclear → state explicitly
+RULES:
 
-Additional Constraints
+Max 4 bullets total for Definition + Relationships + Usage
+Compress wording, not concepts
+Process Library (TARGET 5–7, include all important processes if present)
 
-Extract slide number as metadata (not a visual)
-Ignore decorative backgrounds and design elements
-Ignore non-visible artifacts (CSS/XML/etc.)
-Do NOT include internal filenames
-Do NOT invent or infer missing content
-Calibrate confidence properly (do not default to High)
+For each:
+Process Name:
+Stages:
+Inputs:
+Outputs:
+Owners (if stated):
 
-Output Requirement
+RULES:
 
-Return output in a consistent structured format with no extra commentary.
+Max 5 stages per process
+Each stage = 1 short line
+Keep all key processes even if compressed
+Metrics & Measurement
+
+For each:
+Metric Name:
+What it measures:
+Constraints:
+Hierarchy (if any):
+
+RULES:
+
+Include only true metrics (not dashboards/tools)
+Keep minimal
+Resource / System Architecture
+Components (roles, tools, systems)
+Categories (if applicable)
+How components connect
+Terminology Mapping
+Term → Definition
+Term A → Equivalent Term B
+Visual Structure Extraction
+
+For each visual model:
+Type: (diagram / flow / hierarchy / system)
+Components:
+Connections:
+Description (structure only)
+
+Do NOT describe styling.
+
+COMPRESSION PRIORITY
+
+If output approaches limit:
+
+Keep Canonical Models
+Keep Process Library
+Keep Metrics
+Reduce detail in other sections
+HARD STOP RULE (CRITICAL)
+
+If nearing token limit:
+
+STOP adding detail immediately
+Do NOT expand definitions
+Do NOT add low-priority content
+GOAL
+
+Produce a dense, structured, machine-readable output suitable for:
+
+knowledge graphs
+RAG ingestion
+cross-document comparison
 """
