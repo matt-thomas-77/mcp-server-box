@@ -41,8 +41,7 @@ async def box_ai_ask_file_single_tool(
 
 
 async def box_ai_pdf_powerpoint_parser_tool(
-    ctx: Context, file_id: str, prompt: str = PDF_POWERPOINT_PARSER_PROMPT, 
-    ai_agent_id: str = "66136138"
+    ctx: Context, file_id: str,ai_agent_id: str = "66136138"
 ) -> dict:
     """
     Use AI to get full content in text format from a PDF or PowerPoint file, including text in images.
@@ -57,7 +56,7 @@ async def box_ai_pdf_powerpoint_parser_tool(
 
     box_client = get_box_client(ctx)
     response = box_ai_ask_file_single(
-        box_client, file_id, prompt=prompt, ai_agent_id=ai_agent_id
+        box_client, file_id, prompt=PDF_POWERPOINT_PARSER_PROMPT, ai_agent_id=ai_agent_id
     )
     return response
 
