@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_task_assign_by_email,
     box_task_assign_by_user_id,
@@ -30,7 +31,7 @@ async def box_task_assign_by_email_tool(ctx: Context, task_id: str, email: str) 
         dict: The response from the Box API after assigning the task.
     """
     box_client = get_box_client(ctx)
-    response = box_task_assign_by_email(box_client, task_id, email)
+    response = await asyncio.to_thread(lambda: box_task_assign_by_email(box_client, task_id, email))
     return response
 
 
@@ -47,7 +48,7 @@ async def box_task_assign_by_user_id_tool(
         dict: The response from the Box API after assigning the task.
     """
     box_client = get_box_client(ctx)
-    response = box_task_assign_by_user_id(box_client, task_id, user_id)
+    response = await asyncio.to_thread(lambda: box_task_assign_by_user_id(box_client, task_id, user_id))
     return response
 
 
@@ -61,7 +62,7 @@ async def box_task_assignment_details_tool(ctx: Context, assignment_id: str) -> 
         dict: The response from the Box API with the task assignment details.
     """
     box_client = get_box_client(ctx)
-    response = box_task_assignment_details(box_client, assignment_id)
+    response = await asyncio.to_thread(lambda: box_task_assignment_details(box_client, assignment_id))
     return response
 
 
@@ -75,7 +76,7 @@ async def box_task_assignment_remove_tool(ctx: Context, assignment_id: str) -> d
         dict: The response from the Box API after removing the task assignment.
     """
     box_client = get_box_client(ctx)
-    response = box_task_assignment_remove(box_client, assignment_id)
+    response = await asyncio.to_thread(lambda: box_task_assignment_remove(box_client, assignment_id))
     return response
 
 
@@ -96,8 +97,8 @@ async def box_task_assignment_update_tool(
         dict: The response from the Box API after updating the task assignment.
     """
     box_client = get_box_client(ctx)
-    response = box_task_assignment_update(
-        box_client, assignment_id, is_positive_outcome, message
+    response = await asyncio.to_thread(
+        lambda: box_task_assignment_update(box_client, assignment_id, is_positive_outcome, message)
     )
     return response
 
@@ -112,7 +113,7 @@ async def box_task_assignments_list_tool(ctx: Context, task_id: str) -> dict:
         dict: The response from the Box API with the list of task assignments.
     """
     box_client = get_box_client(ctx)
-    response = box_task_assignments_list(box_client, task_id)
+    response = await asyncio.to_thread(lambda: box_task_assignments_list(box_client, task_id))
     return response
 
 
@@ -135,8 +136,8 @@ async def box_task_complete_create_tool(
         dict: The response from the Box API after creating the completion task.
     """
     box_client = get_box_client(ctx)
-    response = box_task_complete_create(
-        box_client, file_id, due_at, message, requires_all_assignees_to_complete
+    response = await asyncio.to_thread(
+        lambda: box_task_complete_create(box_client, file_id, due_at, message, requires_all_assignees_to_complete)
     )
     return response
 
@@ -151,7 +152,7 @@ async def box_task_details_tool(ctx: Context, task_id: str) -> dict:
         dict: The response from the Box API with the task details.
     """
     box_client = get_box_client(ctx)
-    response = box_task_details(box_client, task_id)
+    response = await asyncio.to_thread(lambda: box_task_details(box_client, task_id))
     return response
 
 
@@ -165,7 +166,7 @@ async def box_task_file_list_tool(ctx: Context, file_id: str) -> dict:
         dict: The response from the Box API with the list of tasks.
     """
     box_client = get_box_client(ctx)
-    response = box_task_file_list(box_client, file_id)
+    response = await asyncio.to_thread(lambda: box_task_file_list(box_client, file_id))
     return response
 
 
@@ -179,7 +180,7 @@ async def box_task_remove_tool(ctx: Context, task_id: str) -> dict:
         dict: The response from the Box API after removing the task.
     """
     box_client = get_box_client(ctx)
-    response = box_task_remove(box_client, task_id)
+    response = await asyncio.to_thread(lambda: box_task_remove(box_client, task_id))
     return response
 
 
@@ -202,8 +203,8 @@ async def box_task_review_create_tool(
         dict: The response from the Box API after creating the review task.
     """
     box_client = get_box_client(ctx)
-    response = box_task_review_create(
-        box_client, file_id, due_at, message, requires_all_assignees_to_complete
+    response = await asyncio.to_thread(
+        lambda: box_task_review_create(box_client, file_id, due_at, message, requires_all_assignees_to_complete)
     )
     return response
 
@@ -227,7 +228,7 @@ async def box_task_update_tool(
         dict: The response from the Box API after updating the task.
     """
     box_client = get_box_client(ctx)
-    response = box_task_update(
-        box_client, task_id, due_at, message, requires_all_assignees_to_complete
+    response = await asyncio.to_thread(
+        lambda: box_task_update(box_client, task_id, due_at, message, requires_all_assignees_to_complete)
     )
     return response

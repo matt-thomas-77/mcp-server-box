@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_ai_agent_info_by_id,
     box_ai_agents_list,
@@ -34,8 +35,8 @@ async def box_ai_ask_file_single_tool(
     """
 
     box_client = get_box_client(ctx)
-    response = box_ai_ask_file_single(
-        box_client, file_id, prompt=prompt, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_ask_file_single(box_client, file_id, prompt=prompt, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -55,8 +56,8 @@ async def box_ai_pdf_powerpoint_parser_tool(
     """
 
     box_client = get_box_client(ctx)
-    response = box_ai_ask_file_single(
-        box_client, file_id, prompt=PDF_POWERPOINT_PARSER_PROMPT, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_ask_file_single(box_client, file_id, prompt=PDF_POWERPOINT_PARSER_PROMPT, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -75,8 +76,8 @@ async def box_ai_ask_file_multi_tool(
         dict: The AI response containing the answers to the questions for each file.
     """
     box_client = get_box_client(ctx)
-    response = box_ai_ask_file_multi(
-        box_client, file_ids, prompt=prompt, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_ask_file_multi(box_client, file_ids, prompt=prompt, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -95,8 +96,8 @@ async def box_ai_ask_hub_tool(
         dict: The AI response containing the answer to the question.
     """
     box_client = get_box_client(ctx)
-    response = box_ai_ask_hub(
-        box_client, hub_id, prompt=prompt, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_ask_hub(box_client, hub_id, prompt=prompt, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -137,8 +138,8 @@ async def box_ai_extract_freeform_tool(
     """
     box_client = get_box_client(ctx)
 
-    response = box_ai_extract_freeform(
-        box_client, file_ids, prompt=prompt, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_extract_freeform(box_client, file_ids, prompt=prompt, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -228,8 +229,8 @@ async def box_ai_extract_structured_using_fields_tool(
     """
     box_client = get_box_client(ctx)
 
-    response = box_ai_extract_structured_using_fields(
-        box_client, file_ids, fields, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_extract_structured_using_fields(box_client, file_ids, fields, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -265,8 +266,8 @@ async def box_ai_extract_structured_using_template_tool(
     """
     box_client = get_box_client(ctx)
 
-    response = box_ai_extract_structured_using_template(
-        box_client, file_ids, template_key, ai_agent_id=ai_agent_id
+    response = await asyncio.to_thread(
+        lambda: box_ai_extract_structured_using_template(box_client, file_ids, template_key, ai_agent_id=ai_agent_id)
     )
     return response
 
@@ -310,10 +311,8 @@ async def box_ai_extract_structured_enhanced_using_fields_tool(
     """
     box_client = get_box_client(ctx)
 
-    response = box_ai_extract_structured_enhanced_using_fields(
-        box_client,
-        file_ids,
-        fields,
+    response = await asyncio.to_thread(
+        lambda: box_ai_extract_structured_enhanced_using_fields(box_client, file_ids, fields)
     )
     return response
 
@@ -353,8 +352,8 @@ async def box_ai_extract_structured_enhanced_using_template_tool(
     """
     box_client = get_box_client(ctx)
 
-    response = box_ai_extract_structured_enhanced_using_template(
-        box_client, file_ids, template_key
+    response = await asyncio.to_thread(
+        lambda: box_ai_extract_structured_enhanced_using_template(box_client, file_ids, template_key)
     )
     return response
 
@@ -371,7 +370,7 @@ async def box_ai_agent_info_by_id_tool(
         dict: A dictionary containing the AI agent information.
     """
     box_client = get_box_client(ctx)
-    response = box_ai_agent_info_by_id(box_client, ai_agent_id)
+    response = await asyncio.to_thread(lambda: box_ai_agent_info_by_id(box_client, ai_agent_id))
     return response
 
 
@@ -387,7 +386,7 @@ async def box_ai_agents_list_tool(
         dict: A dictionary containing the list of AI agents.
     """
     box_client = get_box_client(ctx)
-    response = box_ai_agents_list(box_client, limit=limit)
+    response = await asyncio.to_thread(lambda: box_ai_agents_list(box_client, limit=limit))
     return response
 
 
@@ -404,5 +403,5 @@ async def box_ai_agents_search_by_name_tool(
         dict: A dictionary containing the list of matching AI agents.
     """
     box_client = get_box_client(ctx)
-    response = box_ai_agents_search_by_name(box_client, name, limit=limit)
+    response = await asyncio.to_thread(lambda: box_ai_agents_search_by_name(box_client, name, limit=limit))
     return response

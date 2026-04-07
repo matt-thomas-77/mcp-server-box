@@ -1,3 +1,4 @@
+import asyncio
 from box_ai_agents_toolkit import (
     box_web_link_create,
     box_web_link_delete_by_id,
@@ -30,13 +31,13 @@ async def box_web_link_create_tool(
         dict: The response from the Box API after creating the web link.
     """
     box_client = get_box_client(ctx)
-    return box_web_link_create(
+    return await asyncio.to_thread(lambda: box_web_link_create(
         box_client,
         url=url,
         parent_folder_id=parent_folder_id,
         name=name,
         description=description,
-    )
+    ))
 
 
 async def box_web_link_get_by_id_tool(ctx: Context, web_link_id: str) -> dict:
@@ -51,7 +52,7 @@ async def box_web_link_get_by_id_tool(ctx: Context, web_link_id: str) -> dict:
         dict: The response from the Box API containing the web link details.
     """
     box_client = get_box_client(ctx)
-    return box_web_link_get_by_id(box_client, web_link_id=web_link_id)
+    return await asyncio.to_thread(lambda: box_web_link_get_by_id(box_client, web_link_id=web_link_id))
 
 
 async def box_web_link_update_by_id_tool(
@@ -76,14 +77,14 @@ async def box_web_link_update_by_id_tool(
         dict: The response from the Box API after updating the web link.
     """
     box_client = get_box_client(ctx)
-    return box_web_link_update_by_id(
+    return await asyncio.to_thread(lambda: box_web_link_update_by_id(
         box_client,
         web_link_id=web_link_id,
         url=url,
         parent_folder_id=parent_folder_id,
         name=name,
         description=description,
-    )
+    ))
 
 
 async def box_web_link_delete_by_id_tool(ctx: Context, web_link_id: str) -> dict:
@@ -98,4 +99,4 @@ async def box_web_link_delete_by_id_tool(ctx: Context, web_link_id: str) -> dict
         dict: The response from the Box API after deleting the web link.
     """
     box_client = get_box_client(ctx)
-    return box_web_link_delete_by_id(box_client, web_link_id=web_link_id)
+    return await asyncio.to_thread(lambda: box_web_link_delete_by_id(box_client, web_link_id=web_link_id))

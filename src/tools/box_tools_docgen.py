@@ -1,5 +1,6 @@
 from typing import Any, Optional
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_docgen_create_batch,
     box_docgen_create_single_file_from_user_input,
@@ -33,7 +34,7 @@ async def box_docgen_template_create_tool(ctx: Context, file_id: str) -> dict[st
         dict[str, Any]: Metadata of the created template.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_create(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_docgen_template_create(box_client, file_id))
 
 
 async def box_docgen_template_list_tool(
@@ -53,7 +54,7 @@ async def box_docgen_template_list_tool(
         dict[str, Any] | list[dict[str, Any]]: A list of template metadata or an error message.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_list(box_client, marker=marker, limit=limit)
+    return await asyncio.to_thread(lambda: box_docgen_template_list(box_client, marker=marker, limit=limit))
 
 
 async def box_docgen_template_get_by_id_tool(
@@ -70,7 +71,7 @@ async def box_docgen_template_get_by_id_tool(
         dict[str, Any]: Metadata of the template or an error message.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_get_by_id(box_client, template_id)
+    return await asyncio.to_thread(lambda: box_docgen_template_get_by_id(box_client, template_id))
 
 
 async def box_docgen_template_get_by_name_tool(
@@ -87,7 +88,7 @@ async def box_docgen_template_get_by_name_tool(
         dict[str, Any]: Metadata of the template or an error message.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_get_by_name(box_client, template_name)
+    return await asyncio.to_thread(lambda: box_docgen_template_get_by_name(box_client, template_name))
 
 
 async def box_docgen_template_delete_tool(
@@ -103,7 +104,7 @@ async def box_docgen_template_delete_tool(
         dict[str, Any]: Success message or an error message.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_delete(box_client, template_id)
+    return await asyncio.to_thread(lambda: box_docgen_template_delete(box_client, template_id))
 
 
 async def box_docgen_template_list_tags_tool(
@@ -127,13 +128,13 @@ async def box_docgen_template_list_tags_tool(
         list[dict[str, Any]]: A list of tags for the template or an error message.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_list_tags(
+    return await asyncio.to_thread(lambda: box_docgen_template_list_tags(
         box_client,
         template_id,
         template_version_id=template_version_id,
         marker=marker,
         limit=limit,
-    )
+    ))
 
 
 async def box_docgen_template_list_jobs_tool(
@@ -155,9 +156,9 @@ async def box_docgen_template_list_jobs_tool(
         DocGenJobsV2025R0: A page of Doc Gen jobs for the template.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_template_list_jobs(
+    return await asyncio.to_thread(lambda: box_docgen_template_list_jobs(
         box_client, template_id=template_id, marker=marker, limit=limit
-    )
+    ))
 
 
 # endregion DocGen Templates
@@ -210,13 +211,13 @@ async def box_docgen_create_batch_tool(
         If an error occurs, contains an "error" key with the error message.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_create_batch(
+    return await asyncio.to_thread(lambda: box_docgen_create_batch(
         box_client,
         docgen_template_id=docgen_template_id,
         destination_folder_id=destination_folder_id,
         document_generation_data=document_generation_data,
         output_type=output_type,
-    )
+    ))
 
 
 async def box_docgen_create_single_file_from_user_input_tool(
@@ -262,14 +263,14 @@ async def box_docgen_create_single_file_from_user_input_tool(
         dict[str, Any]: Information about the created batch job.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_create_single_file_from_user_input(
+    return await asyncio.to_thread(lambda: box_docgen_create_single_file_from_user_input(
         box_client,
         docgen_template_id=docgen_template_id,
         destination_folder_id=destination_folder_id,
         user_input=user_input,
         generated_file_name=generated_file_name,
         output_type=output_type,
-    )
+    ))
 
 
 async def box_docgen_list_jobs_by_batch_tool(
@@ -291,9 +292,9 @@ async def box_docgen_list_jobs_by_batch_tool(
         list[dict[str, Any]]: A list of Doc Gen jobs in the batch.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_list_jobs_by_batch(
+    return await asyncio.to_thread(lambda: box_docgen_list_jobs_by_batch(
         box_client, batch_id=batch_id, marker=marker, limit=limit
-    )
+    ))
 
 
 async def box_docgen_get_job_by_id_tool(ctx: Context, job_id: str) -> dict[str, Any]:
@@ -308,7 +309,7 @@ async def box_docgen_get_job_by_id_tool(ctx: Context, job_id: str) -> dict[str, 
         dict[str, Any]: Details of the specified Doc Gen job.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_get_job_by_id(box_client, job_id)
+    return await asyncio.to_thread(lambda: box_docgen_get_job_by_id(box_client, job_id))
 
 
 async def box_docgen_list_jobs_tool(
@@ -328,7 +329,7 @@ async def box_docgen_list_jobs_tool(
         list[dict[str, Any]]: A list of Doc Gen jobs.
     """
     box_client = get_box_client(ctx)
-    return box_docgen_list_jobs(box_client, marker=marker, limit=limit)
+    return await asyncio.to_thread(lambda: box_docgen_list_jobs(box_client, marker=marker, limit=limit))
 
 
 # endregion DocGen Batches and Jobs

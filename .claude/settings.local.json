@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"c:\\\\Users\\\\Matthew.Thomas\\\\EQT\\\\mcp-server-box\\\\.venv\\\\Scripts\\\\python\"*)"
+    ]
+  }
+}

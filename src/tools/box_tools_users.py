@@ -1,3 +1,4 @@
+import asyncio
 from box_ai_agents_toolkit import (
     box_users_list,
     box_users_locate_by_email,
@@ -16,7 +17,7 @@ async def box_users_list_tool(ctx: Context) -> dict:
     Returns:
         dict: A dictionary containing the list of users."""
     client = get_box_client(ctx)
-    return box_users_list(client)
+    return await asyncio.to_thread(lambda: box_users_list(client))
 
 
 async def box_users_locate_by_name_tool(ctx: Context, name: str) -> dict:
@@ -27,7 +28,7 @@ async def box_users_locate_by_name_tool(ctx: Context, name: str) -> dict:
     Returns:
         dict: A dictionary containing the user information if found, otherwise a message with no user found."""
     client = get_box_client(ctx)
-    return box_users_locate_by_name(client, name)
+    return await asyncio.to_thread(lambda: box_users_locate_by_name(client, name))
 
 
 async def box_users_locate_by_email_tool(ctx: Context, email: str) -> dict:
@@ -38,7 +39,7 @@ async def box_users_locate_by_email_tool(ctx: Context, email: str) -> dict:
     Returns:
         dict: A dictionary containing the user information if found, otherwise a message with no user found."""
     client = get_box_client(ctx)
-    return box_users_locate_by_email(client, email)
+    return await asyncio.to_thread(lambda: box_users_locate_by_email(client, email))
 
 
 async def box_users_search_by_name_or_email_tool(ctx: Context, query: str) -> dict:
@@ -49,4 +50,4 @@ async def box_users_search_by_name_or_email_tool(ctx: Context, query: str) -> di
     Returns:
         dict: A dictionary containing the list of matching users."""
     client = get_box_client(ctx)
-    return box_users_search_by_name_or_email(client, query)
+    return await asyncio.to_thread(lambda: box_users_search_by_name_or_email(client, query))

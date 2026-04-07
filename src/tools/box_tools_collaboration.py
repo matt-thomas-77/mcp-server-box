@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_collaboration_delete,
     box_collaboration_file_group_by_group_id,
@@ -26,7 +27,7 @@ async def box_collaboration_list_by_file_tool(ctx: Context, file_id: str) -> dic
         dict: A dictionary containing the list of collaborations or an error message.
     """
     client = get_box_client(ctx)
-    return box_collaborations_list_by_file(client, file_id)
+    return await asyncio.to_thread(lambda: box_collaborations_list_by_file(client, file_id))
 
 
 async def box_collaboration_list_by_folder_tool(ctx: Context, folder_id: str) -> dict:
@@ -38,7 +39,7 @@ async def box_collaboration_list_by_folder_tool(ctx: Context, folder_id: str) ->
         dict: A dictionary containing the list of collaborations or an error message.
     """
     client = get_box_client(ctx)
-    return box_collaborations_list_by_folder(client, folder_id)
+    return await asyncio.to_thread(lambda: box_collaborations_list_by_folder(client, folder_id))
 
 
 async def box_collaboration_delete_tool(ctx: Context, collaboration_id: str) -> dict:
@@ -50,7 +51,7 @@ async def box_collaboration_delete_tool(ctx: Context, collaboration_id: str) -> 
         dict: A dictionary containing the result of the deletion or an error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_delete(client, collaboration_id)
+    return await asyncio.to_thread(lambda: box_collaboration_delete(client, collaboration_id))
 
 
 async def box_collaboration_file_group_by_group_id_tool(
@@ -75,9 +76,9 @@ async def box_collaboration_file_group_by_group_id_tool(
         Dict[str, Any]: Dictionary containing collaboration details or error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_file_group_by_group_id(
+    return await asyncio.to_thread(lambda: box_collaboration_file_group_by_group_id(
         client, file_id, group_id, role, is_access_only, expires_at, notify
-    )
+    ))
 
 
 async def box_collaboration_file_user_by_user_id_tool(
@@ -102,9 +103,9 @@ async def box_collaboration_file_user_by_user_id_tool(
         Dict[str, Any]: Dictionary containing collaboration details or error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_file_user_by_user_id(
+    return await asyncio.to_thread(lambda: box_collaboration_file_user_by_user_id(
         client, file_id, user_id, role, is_access_only, expires_at, notify
-    )
+    ))
 
 
 async def box_collaboration_file_user_by_user_login_tool(
@@ -129,9 +130,9 @@ async def box_collaboration_file_user_by_user_login_tool(
         Dict[str, Any]: Dictionary containing collaboration details or error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_file_user_by_user_login(
+    return await asyncio.to_thread(lambda: box_collaboration_file_user_by_user_login(
         client, file_id, user_login, role, is_access_only, expires_at, notify
-    )
+    ))
 
 
 async def box_collaboration_folder_group_by_group_id_tool(
@@ -157,7 +158,7 @@ async def box_collaboration_folder_group_by_group_id_tool(
         Dict[str, Any]: Dictionary containing collaboration details or error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_folder_group_by_group_id(
+    return await asyncio.to_thread(lambda: box_collaboration_folder_group_by_group_id(
         client,
         folder_id,
         group_id,
@@ -166,7 +167,7 @@ async def box_collaboration_folder_group_by_group_id_tool(
         can_view_path,
         expires_at,
         notify,
-    )
+    ))
 
 
 async def box_collaboration_folder_user_by_user_id_tool(
@@ -192,7 +193,7 @@ async def box_collaboration_folder_user_by_user_id_tool(
         Dict[str, Any]: Dictionary containing collaboration details or error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_folder_user_by_user_id(
+    return await asyncio.to_thread(lambda: box_collaboration_folder_user_by_user_id(
         client,
         folder_id,
         user_id,
@@ -201,7 +202,7 @@ async def box_collaboration_folder_user_by_user_id_tool(
         can_view_path,
         expires_at,
         notify,
-    )
+    ))
 
 
 async def box_collaboration_folder_user_by_user_login_tool(
@@ -227,7 +228,7 @@ async def box_collaboration_folder_user_by_user_login_tool(
         Dict[str, Any]: Dictionary containing collaboration details or error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_folder_user_by_user_login(
+    return await asyncio.to_thread(lambda: box_collaboration_folder_user_by_user_login(
         client,
         folder_id,
         user_login,
@@ -236,7 +237,7 @@ async def box_collaboration_folder_user_by_user_login_tool(
         can_view_path,
         expires_at,
         notify,
-    )
+    ))
 
 
 async def box_collaboration_update_tool(
@@ -259,4 +260,4 @@ async def box_collaboration_update_tool(
         dict: A dictionary containing the updated collaboration details or an error message.
     """
     client = get_box_client(ctx)
-    return box_collaboration_update(client, collaboration_id, role)
+    return await asyncio.to_thread(lambda: box_collaboration_update(client, collaboration_id, role))

@@ -1,5 +1,6 @@
 from typing import Any
 
+import asyncio
 from box_ai_agents_toolkit import box_file_text_extract
 from mcp.server.fastmcp import Context
 
@@ -23,4 +24,4 @@ async def box_file_text_extract_tool(
         dict[str, Any]: The extracted text (markdown or plain text).
     """
     box_client = get_box_client(ctx)
-    return box_file_text_extract(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_text_extract(box_client, file_id))

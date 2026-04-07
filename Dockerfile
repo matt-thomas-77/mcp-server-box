@@ -29,4 +29,4 @@ ENV LOG_LEVEL=debug
 ENV PATH="/app/.venv/bin:$PATH"
 
 # --transport http: Uses Streaming HTTP transport with OAuth authentication
-CMD ["uv", "run", "src/mcp_server_box.py", "--transport", "http", "--mcp-auth-type", "oauth", "--box-auth-type", "mcp", "--host", "0.0.0.0", "--port", "8005"]
+CMD ["uv", "run", "src/mcp_server_box.py", "--transport", "http", "--mcp-auth-type", "oauth", "--box-auth-type", "mcp_client", "--host", "0.0.0.0", "--port", "8005"]

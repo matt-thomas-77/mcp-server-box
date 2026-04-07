@@ -1,5 +1,6 @@
 from typing import Optional
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_folder_copy,
     box_folder_create,
@@ -41,12 +42,12 @@ async def box_folder_copy_tool(
         dict[str, Any]: Dictionary containing the copied folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_copy(
+    return await asyncio.to_thread(lambda: box_folder_copy(
         client=client,
         folder_id=folder_id,
         destination_parent_folder_id=destination_parent_folder_id,
         name=name,
-    )
+    ))
 
 
 async def box_folder_create_tool(
@@ -64,11 +65,11 @@ async def box_folder_create_tool(
         dict[str, Any]: Dictionary containing the created folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_create(
+    return await asyncio.to_thread(lambda: box_folder_create(
         client=client,
         name=name,
         parent_folder_id=parent_folder_id,
-    )
+    ))
 
 
 async def box_folder_delete_tool(
@@ -87,11 +88,11 @@ async def box_folder_delete_tool(
         dict[str, Any]: Dictionary containing success message or error message
     """
     client = get_box_client(ctx)
-    return box_folder_delete(
+    return await asyncio.to_thread(lambda: box_folder_delete(
         client=client,
         folder_id=folder_id,
         recursive=recursive,
-    )
+    ))
 
 
 async def box_folder_favorites_add_tool(
@@ -109,10 +110,10 @@ async def box_folder_favorites_add_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_favorites_add(
+    return await asyncio.to_thread(lambda: box_folder_favorites_add(
         client=client,
         folder_id=folder_id,
-    )
+    ))
 
 
 async def box_folder_favorites_remove_tool(
@@ -129,10 +130,10 @@ async def box_folder_favorites_remove_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_favorites_remove(
+    return await asyncio.to_thread(lambda: box_folder_favorites_remove(
         client=client,
         folder_id=folder_id,
-    )
+    ))
 
 
 async def box_folder_info_tool(
@@ -149,10 +150,10 @@ async def box_folder_info_tool(
         dict[str, Any]: Dictionary containing folder information or error message.
     """
     client = get_box_client(ctx)
-    return box_folder_info(
+    return await asyncio.to_thread(lambda: box_folder_info(
         client=client,
         folder_id=folder_id,
-    )
+    ))
 
 
 async def box_folder_items_list_tool(
@@ -174,12 +175,12 @@ async def box_folder_items_list_tool(
         dict[str, Any]: Dictionary containing folder items list or error message.
     """
     client = get_box_client(ctx)
-    return box_folder_items_list(
+    return await asyncio.to_thread(lambda: box_folder_items_list(
         client=client,
         folder_id=folder_id,
         is_recursive=is_recursive,
         limit=limit,
-    )
+    ))
 
 
 async def box_folder_list_tags_tool(
@@ -197,10 +198,10 @@ async def box_folder_list_tags_tool(
         dict[str, Any]: Dictionary containing the list of tags or error message
     """
     client = get_box_client(ctx)
-    return box_folder_tag_list(
+    return await asyncio.to_thread(lambda: box_folder_tag_list(
         client=client,
         folder_id=folder_id,
-    )
+    ))
 
 
 async def box_folder_move_tool(
@@ -219,11 +220,11 @@ async def box_folder_move_tool(
         dict[str, Any]: Dictionary containing the moved folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_move(
+    return await asyncio.to_thread(lambda: box_folder_move(
         client=client,
         folder_id=folder_id,
         destination_parent_folder_id=destination_parent_folder_id,
-    )
+    ))
 
 
 async def box_folder_rename_tool(
@@ -242,11 +243,11 @@ async def box_folder_rename_tool(
         dict[str, Any]: Dictionary containing the renamed folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_rename(
+    return await asyncio.to_thread(lambda: box_folder_rename(
         client=client,
         folder_id=folder_id,
         new_name=new_name,
-    )
+    ))
 
 
 async def box_folder_set_collaboration_tool(
@@ -268,13 +269,13 @@ async def box_folder_set_collaboration_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_set_collaboration(
+    return await asyncio.to_thread(lambda: box_folder_set_collaboration(
         client=client,
         folder_id=folder_id,
         can_non_owners_invite=can_non_owners_invite,
         can_non_owners_view_collaborators=can_non_owners_view_collaborators,
         is_collaboration_restricted_to_enterprise=is_collaboration_restricted_to_enterprise,
-    )
+    ))
 
 
 async def box_folder_set_description_tool(
@@ -293,11 +294,11 @@ async def box_folder_set_description_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_set_description(
+    return await asyncio.to_thread(lambda: box_folder_set_description(
         client=client,
         folder_id=folder_id,
         description=description,
-    )
+    ))
 
 
 async def box_folder_set_sync_tool(
@@ -317,11 +318,11 @@ async def box_folder_set_sync_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_set_sync(
+    return await asyncio.to_thread(lambda: box_folder_set_sync(
         client=client,
         folder_id=folder_id,
         sync_state=sync_state,
-    )
+    ))
 
 
 async def box_folder_set_upload_email_tool(
@@ -343,11 +344,11 @@ async def box_folder_set_upload_email_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_set_upload_email(
+    return await asyncio.to_thread(lambda: box_folder_set_upload_email(
         client=client,
         folder_id=folder_id,
         folder_upload_email_access=folder_upload_email_access,
-    )
+    ))
 
 
 async def box_folder_tag_add_tool(
@@ -367,11 +368,11 @@ async def box_folder_tag_add_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_tag_add(
+    return await asyncio.to_thread(lambda: box_folder_tag_add(
         client=client,
         folder_id=folder_id,
         tag=tag,
-    )
+    ))
 
 
 async def box_folder_tag_remove_tool(
@@ -389,8 +390,8 @@ async def box_folder_tag_remove_tool(
         dict[str, Any]: Dictionary containing the updated folder object or error message
     """
     client = get_box_client(ctx)
-    return box_folder_tag_remove(
+    return await asyncio.to_thread(lambda: box_folder_tag_remove(
         client=client,
         folder_id=folder_id,
         tag=tag,
-    )
+    ))

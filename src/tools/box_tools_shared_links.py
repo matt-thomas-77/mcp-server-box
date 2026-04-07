@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_shared_link_file_create_or_update,
     box_shared_link_file_find_by_shared_link_url,
@@ -31,7 +32,7 @@ async def box_shared_link_file_get_tool(ctx: Context, file_id: str) -> dict:
         dict: The response from the Box API containing the shared link details.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_file_get(box_client, file_id=file_id)
+    return await asyncio.to_thread(lambda: box_shared_link_file_get(box_client, file_id=file_id))
 
 
 async def box_shared_link_file_create_or_update_tool(
@@ -60,7 +61,7 @@ async def box_shared_link_file_create_or_update_tool(
         dict: The response from the Box API after creating or updating the shared link.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_file_create_or_update(
+    return await asyncio.to_thread(lambda: box_shared_link_file_create_or_update(
         box_client,
         file_id=file_id,
         access=access,
@@ -70,7 +71,7 @@ async def box_shared_link_file_create_or_update_tool(
         password=password,
         vanity_name=vanity_name,
         unshared_at=unshared_at,
-    )
+    ))
 
 
 async def box_shared_link_file_remove_tool(ctx: Context, file_id: str) -> dict:
@@ -85,7 +86,7 @@ async def box_shared_link_file_remove_tool(ctx: Context, file_id: str) -> dict:
         dict: The response from the Box API after removing the shared link.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_file_remove(box_client, file_id=file_id)
+    return await asyncio.to_thread(lambda: box_shared_link_file_remove(box_client, file_id=file_id))
 
 
 async def box_shared_link_file_find_by_shared_link_url_tool(
@@ -103,9 +104,9 @@ async def box_shared_link_file_find_by_shared_link_url_tool(
         dict: The response from the Box API containing the file details.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_file_find_by_shared_link_url(
+    return await asyncio.to_thread(lambda: box_shared_link_file_find_by_shared_link_url(
         box_client, shared_link_url=shared_link_url, password=password
-    )
+    ))
 
 
 async def box_shared_link_folder_get_tool(ctx: Context, folder_id: str) -> dict:
@@ -119,7 +120,7 @@ async def box_shared_link_folder_get_tool(ctx: Context, folder_id: str) -> dict:
         dict: The response from the Box API containing the shared link details.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_folder_get(box_client, folder_id=folder_id)
+    return await asyncio.to_thread(lambda: box_shared_link_folder_get(box_client, folder_id=folder_id))
 
 
 async def box_shared_link_folder_create_or_update_tool(
@@ -148,7 +149,7 @@ async def box_shared_link_folder_create_or_update_tool(
         dict: The response from the Box API after creating or updating the shared link.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_folder_create_or_update(
+    return await asyncio.to_thread(lambda: box_shared_link_folder_create_or_update(
         box_client,
         folder_id=folder_id,
         access=access,
@@ -158,7 +159,7 @@ async def box_shared_link_folder_create_or_update_tool(
         password=password,
         vanity_name=vanity_name,
         unshared_at=unshared_at,
-    )
+    ))
 
 
 async def box_shared_link_folder_remove_tool(ctx: Context, folder_id: str) -> dict:
@@ -173,7 +174,7 @@ async def box_shared_link_folder_remove_tool(ctx: Context, folder_id: str) -> di
         dict: The response from the Box API after removing the shared link.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_folder_remove(box_client, folder_id=folder_id)
+    return await asyncio.to_thread(lambda: box_shared_link_folder_remove(box_client, folder_id=folder_id))
 
 
 async def box_shared_link_folder_find_by_shared_link_url_tool(
@@ -191,9 +192,9 @@ async def box_shared_link_folder_find_by_shared_link_url_tool(
         dict: The response from the Box API containing the folder details.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_folder_find_by_shared_link_url(
+    return await asyncio.to_thread(lambda: box_shared_link_folder_find_by_shared_link_url(
         box_client, shared_link_url=shared_link_url, password=password
-    )
+    ))
 
 
 async def box_shared_link_web_link_create_or_update_tool(
@@ -219,14 +220,14 @@ async def box_shared_link_web_link_create_or_update_tool(
         dict: The response from the Box API after creating or updating the shared link.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_web_link_create_or_update(
+    return await asyncio.to_thread(lambda: box_shared_link_web_link_create_or_update(
         box_client,
         web_link_id=web_link_id,
         access=access,
         password=password,
         vanity_name=vanity_name,
         unshared_at=unshared_at,
-    )
+    ))
 
 
 async def box_shared_link_web_link_get_tool(ctx: Context, web_link_id: str) -> dict:
@@ -239,7 +240,7 @@ async def box_shared_link_web_link_get_tool(ctx: Context, web_link_id: str) -> d
         dict: The response from the Box API containing the shared link details.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_web_link_get(box_client, web_link_id=web_link_id)
+    return await asyncio.to_thread(lambda: box_shared_link_web_link_get(box_client, web_link_id=web_link_id))
 
 
 async def box_shared_link_web_link_remove_tool(ctx: Context, web_link_id: str) -> dict:
@@ -254,7 +255,7 @@ async def box_shared_link_web_link_remove_tool(ctx: Context, web_link_id: str) -
         dict: The response from the Box API after removing the shared link.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_web_link_remove(box_client, web_link_id=web_link_id)
+    return await asyncio.to_thread(lambda: box_shared_link_web_link_remove(box_client, web_link_id=web_link_id))
 
 
 async def box_shared_link_web_link_find_by_shared_link_url_tool(
@@ -272,6 +273,6 @@ async def box_shared_link_web_link_find_by_shared_link_url_tool(
         dict: The response from the Box API containing the web link details.
     """
     box_client = get_box_client(ctx)
-    return box_shared_link_web_link_find_by_shared_link_url(
+    return await asyncio.to_thread(lambda: box_shared_link_web_link_find_by_shared_link_url(
         box_client, shared_link_url=shared_link_url, password=password
-    )
+    ))

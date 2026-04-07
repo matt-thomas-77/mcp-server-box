@@ -1,6 +1,7 @@
 import base64
 from typing import Any, Optional
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_file_download,
     box_file_upload,
@@ -34,8 +35,8 @@ async def box_file_download_tool(
     save_file = bool(save_file)
 
     box_client = get_box_client(ctx)
-    path_saved, file_content, mime_type = box_file_download(
-        box_client, file_id, save_file, save_path
+    path_saved, file_content, mime_type = await asyncio.to_thread(
+        lambda: box_file_download(box_client, file_id, save_file, save_path)
     )
 
     result: dict[str, Any] = {}
@@ -81,4 +82,4 @@ async def box_file_upload_tool(
         dict[str, Any]: Information about the uploaded file including id and name.
     """
     box_client = get_box_client(ctx)
-    return box_file_upload(box_client, content, file_name, parent_folder_id)
+    return await asyncio.to_thread(lambda: box_file_upload(box_client, content, file_name, parent_folder_id))

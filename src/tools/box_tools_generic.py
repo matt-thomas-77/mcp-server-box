@@ -1,5 +1,6 @@
 from typing import cast
 
+import asyncio
 from box_ai_agents_toolkit import BoxClient, authorize_app
 from mcp.server.fastmcp import Context
 
@@ -34,7 +35,7 @@ async def box_who_am_i(ctx: Context) -> dict:
         dict: The current user's information.
     """
     box_client = get_box_client(ctx)
-    return box_client.users.get_user_me().to_dict()
+    return await asyncio.to_thread(lambda: box_client.users.get_user_me().to_dict())
     # return f"Authenticated as: {current_user.name}"
 
 
@@ -46,7 +47,7 @@ async def box_authorize_app_tool() -> str:
     return:
         str: Message
     """
-    result = authorize_app()
+    result = await asyncio.to_thread(authorize_app)
     if result:
         return "Box application authorized successfully"
     else:

@@ -1,3 +1,4 @@
+import asyncio
 from box_ai_agents_toolkit import (
     box_groups_list_by_user,
     box_groups_list_members,
@@ -16,7 +17,7 @@ async def box_groups_search_tool(ctx: Context, query: str) -> dict:
     Returns:
         dict: A dictionary containing the list of matching groups."""
     client = get_box_client(ctx)
-    return box_groups_search(client, query)
+    return await asyncio.to_thread(lambda: box_groups_search(client, query))
 
 
 async def box_groups_list_members_tool(ctx: Context, group_id: str) -> dict:
@@ -27,7 +28,7 @@ async def box_groups_list_members_tool(ctx: Context, group_id: str) -> dict:
     Returns:
         dict: A dictionary containing the list of group members."""
     client = get_box_client(ctx)
-    return box_groups_list_members(client, group_id)
+    return await asyncio.to_thread(lambda: box_groups_list_members(client, group_id))
 
 
 async def box_groups_list_by_user_tool(ctx: Context, user_id: str) -> dict:
@@ -38,4 +39,4 @@ async def box_groups_list_by_user_tool(ctx: Context, user_id: str) -> dict:
     Returns:
         dict: A dictionary containing the list of groups the user belongs to."""
     client = get_box_client(ctx)
-    return box_groups_list_by_user(client, user_id)
+    return await asyncio.to_thread(lambda: box_groups_list_by_user(client, user_id))

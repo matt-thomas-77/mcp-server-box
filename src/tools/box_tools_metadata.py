@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_metadata_delete_instance_on_file,
     box_metadata_get_instance_on_file,
@@ -73,8 +74,8 @@ async def box_metadata_template_create_tool(
         dict: The created metadata template.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_template_create(
-        box_client, display_name, fields, template_key=template_key
+    return await asyncio.to_thread(
+        lambda: box_metadata_template_create(box_client, display_name, fields, template_key=template_key)
     )
 
 
@@ -89,7 +90,7 @@ async def box_metadata_template_list_tool(ctx: Context) -> dict:
         dict: A list of all metadata templates.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_template_list(box_client)
+    return await asyncio.to_thread(lambda: box_metadata_template_list(box_client))
 
 
 async def box_metadata_template_get_by_key_tool(
@@ -106,7 +107,7 @@ async def box_metadata_template_get_by_key_tool(
         dict: The metadata template associated with the provided key.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_template_get_by_key(box_client, template_key)
+    return await asyncio.to_thread(lambda: box_metadata_template_get_by_key(box_client, template_key))
 
 
 async def box_metadata_template_get_by_name_tool(
@@ -123,7 +124,7 @@ async def box_metadata_template_get_by_name_tool(
         dict: The metadata template associated with the provided name.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_template_get_by_name(box_client, template_name)
+    return await asyncio.to_thread(lambda: box_metadata_template_get_by_name(box_client, template_name))
 
 
 async def box_metadata_set_instance_on_file_tool(
@@ -147,8 +148,8 @@ async def box_metadata_set_instance_on_file_tool(
         dict: The response from the Box API after setting the metadata.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_set_instance_on_file(
-        box_client, template_key, file_id, metadata
+    return await asyncio.to_thread(
+        lambda: box_metadata_set_instance_on_file(box_client, template_key, file_id, metadata)
     )
 
 
@@ -169,7 +170,7 @@ async def box_metadata_get_instance_on_file_tool(
         dict: The metadata instance associated with the file.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_get_instance_on_file(box_client, file_id, template_key)
+    return await asyncio.to_thread(lambda: box_metadata_get_instance_on_file(box_client, file_id, template_key))
 
 
 async def box_metadata_update_instance_on_file_tool(
@@ -193,13 +194,13 @@ async def box_metadata_update_instance_on_file_tool(
         dict: The response from the Box API after updating the metadata.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_update_instance_on_file(
+    return await asyncio.to_thread(lambda: box_metadata_update_instance_on_file(
         box_client,
         file_id,
         template_key,
         metadata,
         remove_non_included_data=remove_non_included_data,
-    )
+    ))
 
 
 async def box_metadata_delete_instance_on_file_tool(
@@ -219,4 +220,4 @@ async def box_metadata_delete_instance_on_file_tool(
         dict: The response from the Box API after deleting the metadata.
     """
     box_client = get_box_client(ctx)
-    return box_metadata_delete_instance_on_file(box_client, file_id, template_key)
+    return await asyncio.to_thread(lambda: box_metadata_delete_instance_on_file(box_client, file_id, template_key))

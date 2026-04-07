@@ -4,6 +4,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any
 
+import asyncio
 from box_ai_agents_toolkit import (
     box_file_copy,
     box_file_delete,
@@ -310,7 +311,7 @@ async def box_file_info_tool(
         dict[str, Any]: Information about the file.
     """
     box_client = get_box_client(ctx)
-    return box_file_info(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_info(box_client, file_id))
 
 
 async def box_file_copy_tool(
@@ -331,8 +332,8 @@ async def box_file_copy_tool(
         dict[str, Any]: Dictionary containing the copied file information or error message.
     """
     box_client = get_box_client(ctx)
-    return box_file_copy(
-        box_client, file_id, destination_folder_id, new_name, version_number
+    return await asyncio.to_thread(
+        lambda: box_file_copy(box_client, file_id, destination_folder_id, new_name, version_number)
     )
 
 
@@ -348,7 +349,7 @@ async def box_file_delete_tool(
         dict[str, Any]: Dictionary containing success message or error.
     """
     box_client = get_box_client(ctx)
-    return box_file_delete(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_delete(box_client, file_id))
 
 
 async def box_file_move_tool(
@@ -365,7 +366,7 @@ async def box_file_move_tool(
         dict[str, Any]: Dictionary containing the moved file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_move(box_client, file_id, destination_folder_id)
+    return await asyncio.to_thread(lambda: box_file_move(box_client, file_id, destination_folder_id))
 
 
 async def box_file_rename_tool(
@@ -382,7 +383,7 @@ async def box_file_rename_tool(
         dict[str, Any]: Dictionary containing the renamed file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_rename(box_client, file_id, new_name)
+    return await asyncio.to_thread(lambda: box_file_rename(box_client, file_id, new_name))
 
 
 async def box_file_set_description_tool(
@@ -399,7 +400,7 @@ async def box_file_set_description_tool(
         dict[str, Any]: Dictionary containing the updated file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_set_description(box_client, file_id, description)
+    return await asyncio.to_thread(lambda: box_file_set_description(box_client, file_id, description))
 
 
 async def box_file_retention_date_set_tool(
@@ -418,7 +419,7 @@ async def box_file_retention_date_set_tool(
     box_client = get_box_client(ctx)
     # Parse the retention date string to datetime
     retention_dt = datetime.fromisoformat(retention_date.replace("Z", "+00:00"))
-    return box_file_retention_date_set(box_client, file_id, retention_dt)
+    return await asyncio.to_thread(lambda: box_file_retention_date_set(box_client, file_id, retention_dt))
 
 
 async def box_file_retention_date_clear_tool(
@@ -433,7 +434,7 @@ async def box_file_retention_date_clear_tool(
         dict[str, Any]: Dictionary containing the updated file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_retention_date_clear(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_retention_date_clear(box_client, file_id))
 
 
 async def box_file_lock_tool(
@@ -457,8 +458,8 @@ async def box_file_lock_tool(
     if lock_expires_at:
         lock_expires_dt = datetime.fromisoformat(lock_expires_at.replace("Z", "+00:00"))
 
-    return box_file_lock(
-        box_client, file_id, lock_expires_dt, is_download_prevented
+    return await asyncio.to_thread(
+        lambda: box_file_lock(box_client, file_id, lock_expires_dt, is_download_prevented)
     )
 
 
@@ -474,7 +475,7 @@ async def box_file_unlock_tool(
         dict[str, Any]: Dictionary containing the unlocked file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_unlock(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_unlock(box_client, file_id))
 
 
 async def box_file_set_download_open_tool(
@@ -489,7 +490,7 @@ async def box_file_set_download_open_tool(
         dict[str, Any]: Dictionary containing the updated file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_set_download_open(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_set_download_open(box_client, file_id))
 
 
 async def box_file_set_download_company_tool(
@@ -504,7 +505,7 @@ async def box_file_set_download_company_tool(
         dict[str, Any]: Dictionary containing the updated file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_set_download_company(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_set_download_company(box_client, file_id))
 
 
 async def box_file_set_download_reset_tool(
@@ -519,7 +520,7 @@ async def box_file_set_download_reset_tool(
         dict[str, Any]: Dictionary containing the updated file information.
     """
     box_client = get_box_client(ctx)
-    return box_file_set_download_reset(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_set_download_reset(box_client, file_id))
 
 
 async def box_file_tag_list_tool(
@@ -534,7 +535,7 @@ async def box_file_tag_list_tool(
         dict[str, Any]: Dictionary with list of tags or message if no tags found.
     """
     box_client = get_box_client(ctx)
-    return box_file_tag_list(box_client, file_id)
+    return await asyncio.to_thread(lambda: box_file_tag_list(box_client, file_id))
 
 
 async def box_file_tag_add_tool(
@@ -551,7 +552,7 @@ async def box_file_tag_add_tool(
         dict[str, Any]: Dictionary containing the updated file information including tags.
     """
     box_client = get_box_client(ctx)
-    return box_file_tag_add(box_client, file_id, tag)
+    return await asyncio.to_thread(lambda: box_file_tag_add(box_client, file_id, tag))
 
 
 async def box_file_tag_remove_tool(
@@ -568,7 +569,7 @@ async def box_file_tag_remove_tool(
         dict[str, Any]: Dictionary containing the updated file information including tags.
     """
     box_client = get_box_client(ctx)
-    return box_file_tag_remove(box_client, file_id, tag)
+    return await asyncio.to_thread(lambda: box_file_tag_remove(box_client, file_id, tag))
 
 
 async def box_file_thumbnail_url_tool(
@@ -593,8 +594,8 @@ async def box_file_thumbnail_url_tool(
         dict[str, Any]: Dictionary with thumbnail URL or message if not available.
     """
     box_client = get_box_client(ctx)
-    return box_file_thumbnail_url(
-        box_client, file_id, extension, min_height, min_width, max_height, max_width
+    return await asyncio.to_thread(
+        lambda: box_file_thumbnail_url(box_client, file_id, extension, min_height, min_width, max_height, max_width)
     )
 
 
@@ -620,8 +621,8 @@ async def box_file_thumbnail_download_tool(
         dict[str, Any]: Dictionary with thumbnail image content in base64 or error message.
     """
     box_client = get_box_client(ctx)
-    result = box_file_thumbnail_download(
-        box_client, file_id, extension, min_height, min_width, max_height, max_width
+    result = await asyncio.to_thread(
+        lambda: box_file_thumbnail_download(box_client, file_id, extension, min_height, min_width, max_height, max_width)
     )
 
     # If the result contains binary data, encode it as base64
@@ -656,10 +657,10 @@ async def box_file_presentation_extract_tool(
     """
     box_client = get_box_client(ctx)
 
-    file_info = box_file_info(box_client, file_id)
+    file_info = await asyncio.to_thread(lambda: box_file_info(box_client, file_id))
     file_name = _extract_file_name(file_info)
 
-    _, file_content, mime_type = box_file_download(box_client, file_id, False, None)
+    _, file_content, mime_type = await asyncio.to_thread(lambda: box_file_download(box_client, file_id, False, None))
     mime_type = mime_type or ""
 
     if mime_type == PPT_MIME_TYPE or file_name.lower().endswith(".ppt"):
@@ -695,7 +696,7 @@ async def box_file_presentation_extract_tool(
     is_pptx_hint = mime_type == PPTX_MIME_TYPE or file_name.lower().endswith(".pptx")
 
     if is_pdf_hint:
-        extracted = _extract_pdf_markdown_from_bytes(file_content)
+        extracted = await asyncio.to_thread(lambda: _extract_pdf_markdown_from_bytes(file_content))
         if "error" not in extracted:
             extracted["file_id"] = file_id
             extracted["file_name"] = file_name
@@ -709,7 +710,7 @@ async def box_file_presentation_extract_tool(
         }
 
     # --- .pptx path: return rich content (text + images) ---
-    extracted = _extract_pptx_content_from_bytes(file_content)
+    extracted = await asyncio.to_thread(lambda: _extract_pptx_content_from_bytes(file_content))
 
     # If extraction returned a dict it means an error occurred.
     if isinstance(extracted, dict):

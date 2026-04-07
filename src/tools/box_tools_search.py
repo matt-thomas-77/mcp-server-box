@@ -1,5 +1,6 @@
 from typing import List
 
+import asyncio
 from box_ai_agents_toolkit import (
     SearchForContentContentTypes,
     box_locate_folder_by_name,
@@ -42,8 +43,8 @@ async def box_search_tool(
             content_types.append(SearchForContentContentTypes[content_type])
 
     # Search for files with the query
-    search_results = box_search(
-        box_client, query, file_extensions, content_types, ancestor_folder_ids
+    search_results = await asyncio.to_thread(
+        lambda: box_search(box_client, query, file_extensions, content_types, ancestor_folder_ids)
     )
 
     return [search_result.to_dict() for search_result in search_results]
@@ -59,5 +60,5 @@ async def box_search_folder_by_name_tool(ctx: Context, folder_name: str) -> List
         List[dict]: The folder ID.
     """
     box_client = get_box_client(ctx)
-    search_results = box_locate_folder_by_name(box_client, folder_name)
+    search_results = await asyncio.to_thread(lambda: box_locate_folder_by_name(box_client, folder_name))
     return [search_result.to_dict() for search_result in search_results]
