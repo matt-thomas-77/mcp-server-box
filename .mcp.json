@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "box": {
+      "command": "uv",
+      "args": ["run", "src/mcp_server_box.py", "--box-auth-type", "oauth"]
+    }
+  }
+}
+

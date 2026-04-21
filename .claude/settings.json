@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Matthew.Thomas/EQT/zeroshot-x/mlflow-base-model-test/**)",
+      "mcp__box__box_search_folder_by_name_tool",
+      "mcp__box__box_search_tool",
+      "mcp__box__box_ai_ask_file_single_tool",
+      "mcp__box__box_folder_items_list_tool",
+      "mcp__box__box_file_text_extract_tool"
+    ]
+  }
+}
