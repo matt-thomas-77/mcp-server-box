@@ -27,5 +27,7 @@ ENV PORT=8005
 ENV LOG_LEVEL=debug
 ENV PATH="/app/.venv/bin:$PATH"
 
-# --transport http: Uses Streaming HTTP transport with OAuth authentication
-CMD ["uv", "run", "src/mcp_server_box.py", "--transport", "http", "--mcp-auth-type", "oauth", "--host", "0.0.0.0", "--port", "8005"]
+# --transport http: Streaming HTTP transport
+# --mcp-auth-type token: clients authenticate with BOX_MCP_SERVER_AUTH_TOKEN
+# --box-auth-type ccg: the server holds the Box credentials and refreshes its own tokens
+CMD ["uv", "run", "src/mcp_server_box.py", "--transport", "http", "--mcp-auth-type", "token", "--box-auth-type", "ccg", "--host", "0.0.0.0", "--port", "8005"]
