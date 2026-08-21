@@ -69,4 +69,7 @@ def test_mcp_tool_restored_after_filtering():
 
     register_all_tools(mcp, registrars, enabled_tools={"tool_a"})
 
-    assert mcp.tool is original_tool
+    # mcp.tool builds a new bound method per access, so compare the underlying
+    # function and confirm no patch is left shadowing the class attribute.
+    assert mcp.tool.__func__ is original_tool.__func__
+    assert "tool" not in vars(mcp)

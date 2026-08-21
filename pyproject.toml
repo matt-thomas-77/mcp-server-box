@@ -10,7 +10,7 @@ authors = [{ name = "Box DevRel", email = "dx@box.com" }]
 dependencies = [
     "box-ai-agents-toolkit>=0.1.5",
     "colorlog>=6.10.1",
-    "fastapi>=0.121.0",
+    "fastapi>=0.136.3",
     "mcp[cli]>=1.19.0",
     "pypdf>=5.3.1",
     "python-pptx>=1.0.2",

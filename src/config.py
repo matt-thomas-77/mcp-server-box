@@ -10,6 +10,8 @@ from typing import Optional
 import colorlog
 import dotenv
 
+from redaction import RedactingFilter
+
 
 class TransportType(str, Enum):
     """Available transport types for the MCP server."""
@@ -188,6 +190,10 @@ def setup_logging(level: int = LOG_LEVEL) -> None:
             },
         )
     )
+
+    # Keep credentials out of anything this handler writes, including errors
+    # raised outside of tool calls.
+    handler.addFilter(RedactingFilter())
 
     logging.basicConfig(level=level, handlers=[handler], force=True)
 
